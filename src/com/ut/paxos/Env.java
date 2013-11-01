@@ -1,15 +1,12 @@
 package com.ut.paxos;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
-public class    Env {
+public class Env {
 	Map<ProcessId, Process> procs = new HashMap<ProcessId, Process>();
 	public final static int nAcceptors = 3, nReplicas = 10, nLeaders = 2, initBalance = 150;;
     public static int nRequests = 1;
-    private Set<Account> accounts;
     private HashMap<Integer, String> requests;
 
 	synchronized void sendMessage(ProcessId dst, PaxosMessage msg){
@@ -32,9 +29,9 @@ public class    Env {
 		ProcessId[] acceptors = new ProcessId[nAcceptors];
 		ProcessId[] replicas = new ProcessId[nReplicas];
 		ProcessId[] leaders = new ProcessId[nLeaders];
-        accounts = new HashSet<Account>();
         requests = new HashMap<Integer, String>();
 
+        //give commands
         initCommands();
 
 		for (int i = 0; i < nAcceptors; i++) {
@@ -44,15 +41,16 @@ public class    Env {
 		for (int i = 0; i < nReplicas; i++) {
 			replicas[i] = new ProcessId("replica:" + i);
 			Replica repl = new Replica(this, replicas[i], leaders);
+
+            //give account information to each replica
             for(int j=0;j<5;j++)
                 repl.accounts.add(new Account(j,initBalance));
+
 		}
 		for (int i = 0; i < nLeaders; i++) {
 			leaders[i] = new ProcessId("leader:" + i);
 			Leader leader = new Leader(this, leaders[i], acceptors, replicas);
 		}
-
-
 
 		for (int i = 1; i < nRequests; i++) {
 			ProcessId pid = new ProcessId("client:" + i);

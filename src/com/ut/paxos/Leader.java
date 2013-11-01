@@ -9,6 +9,7 @@ public class Leader extends Process {
 	BallotNumber ballot_number;
 	boolean active = false;
 	Map<Integer, Command> proposals = new HashMap<Integer, Command>();
+    boolean isWaiting = false;
 
 	public Leader(Env env, ProcessId me, ProcessId[] acceptors,
 										ProcessId[] replicas){
@@ -21,6 +22,7 @@ public class Leader extends Process {
 	}
 
 	public void body(){
+
 		System.out.println("Here I am: " + me);
 
 		new Scout(env, new ProcessId("scout:" + me + ":" + ballot_number),
@@ -79,3 +81,5 @@ public class Leader extends Process {
 		}
 	}
 }
+
+

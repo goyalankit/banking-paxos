@@ -10,7 +10,6 @@ public class Replica extends Process {
 	int slot_num = 1;
 	Map<Integer /* slot number */, Command> proposals = new HashMap<Integer, Command>();
 	Map<Integer /* slot number */, Command> decisions = new HashMap<Integer, Command>();
-
     Set<Account> accounts;
 
 	public Replica(Env env, ProcessId me, ProcessId[] leaders){
@@ -54,7 +53,8 @@ public class Replica extends Process {
 	}
 
     private AccountAction createAccountAction(String command){
-        try{
+        try
+        {
             Account srcaccount = null;
             String []s = command.split(" ");
 
@@ -89,18 +89,23 @@ public class Replica extends Process {
                 return new Transfer(srcaccount, dstaccount, Integer.parseInt(s[4]));
             }
 
-        }catch (Exception e){
+        }
+
+        catch (Exception e){
             e.printStackTrace();
             System.err.println("Invalid Command");
             return null;
         }
+
         return null;
     }
 
     private Account getAccountFromNum(int num){
         Account srcaccount = null;
-        for(Account account:accounts){
-            if(account.getAccountNo() == num){
+        for(Account account:accounts)
+        {
+            if(account.getAccountNo() == num)
+            {
                 srcaccount = account;
                 break;
             }
