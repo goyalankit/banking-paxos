@@ -1,5 +1,7 @@
 package com.ut.paxos;
 
+import java.io.PrintStream;
+
 public class AccountAction {
     Account account;
 
@@ -12,6 +14,13 @@ public class AccountAction {
     }
 
     public void perform(){
+    }
+
+    public void writeToConsole(String s, Boolean isError){
+        PrintStream out = isError ? System.err : System.out;
+        out.print("*** ");
+        out.print(s);
+        out.println(" ***");
     }
 }
 
@@ -29,9 +38,9 @@ class Withdraw extends AccountAction {
         int currentBalance = account.getCurrentBalance();
         if(currentBalance >= wdamount){
             account.setCurrentBalance(currentBalance - wdamount);
-            System.out.println("Withdraw Successful of $"+wdamount + " final balance "+account.getCurrentBalance());
+            writeToConsole("Withdraw Successful of $"+wdamount + " final balance "+account.getCurrentBalance(), false);
         }else{
-            System.err.println("Insufficient Balance in Source Account");
+            writeToConsole("Insufficient Balance in Source Account", true);
         }
     }
 
@@ -57,7 +66,7 @@ class Deposit extends AccountAction {
         int currentBalance = account.getCurrentBalance();
 
         account.setCurrentBalance(currentBalance + dpamount);
-        System.out.println("Deposit Successful of $"+dpamount + " final balance "+account.getCurrentBalance());
+        writeToConsole("Deposit Successful of $"+dpamount + " final balance "+account.getCurrentBalance(), false);
 
     }
 
@@ -82,9 +91,9 @@ class Transfer extends AccountAction {
         if(currentBalance >= tamount ){
             account.setCurrentBalance(currentBalance - tamount);
             dstaccount.setCurrentBalance(dstaccount.getCurrentBalance() + tamount);
-            System.out.println("Transfer Successful of $"+ tamount + " final balance "+account.getCurrentBalance());
+            writeToConsole("Transfer Successful of $"+ tamount + " final balance "+account.getCurrentBalance(), false);
         }else{
-            System.err.println("Insufficient Balance in Source Account");
+            writeToConsole("Insufficient Balance in Source Account", true);
         }
     }
 
@@ -102,7 +111,7 @@ class Query extends AccountAction {
 
     @Override
     public void perform(){
-        System.out.println("Query Successful Current balance for "+account.getAccountNo() + ": "+account.getCurrentBalance());
+        writeToConsole("Query Successful Current balance for "+account.getAccountNo() + ": "+account.getCurrentBalance(), false);
     }
 
     public String toString(){
