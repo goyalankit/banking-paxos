@@ -1,13 +1,17 @@
 package com.ut.paxos;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.Map;
 
 public class Env {
 	Map<ProcessId, Process> procs = new HashMap<ProcessId, Process>();
-	public final static int nAcceptors = 3, nReplicas = 10, nLeaders = 2, initBalance = 150;;
+	public final static int nAcceptors = 3, nReplicas = 10, nLeaders = 4, initBalance = 150;;
     public static int nRequests = 1;
     private HashMap<Integer, String> requests;
+    private ProcessId[] rdupRplicas;
 
 	synchronized void sendMessage(ProcessId dst, PaxosMessage msg){
 		Process p = procs.get(dst);
@@ -30,6 +34,7 @@ public class Env {
 		ProcessId[] replicas = new ProcessId[nReplicas];
 		ProcessId[] leaders = new ProcessId[nLeaders];
         requests = new HashMap<Integer, String>();
+        rdupRplicas = new ProcessId[nReplicas];
 
         //give commands
         initCommands();
@@ -40,7 +45,8 @@ public class Env {
 		}
 		for (int i = 0; i < nReplicas; i++) {
 			replicas[i] = new ProcessId("replica:" + i);
-			Replica repl = new Replica(this, replicas[i], leaders);
+            rdupRplicas[i] = replicas[i];
+                    Replica repl = new Replica(this, replicas[i], leaders);
 
             //give account information to each replica
             for(int j=0;j<5;j++)
@@ -72,12 +78,41 @@ public class Env {
         requests.put(5, "CMD Q 1");
         requests.put(6, "CMD w 1 200");
         requests.put(7, "CMD Q 1");
-        requests.put(8, "CMD w 1 500");
+        requests.put(8, "CMD w 1 5");
+        requests.put(9, "CMD Q 1");
+        requests.put(10, "CMD w 1 0");
 
         nRequests = requests.size() + 1;
     }
 
 	public static void main(String[] args){
-		new Env().run(args);
-	}
+		Env env = new Env();
+        env.run(args);
+
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        while(true)
+        {
+            String[] s = new String[0];
+            try {
+                s = in.readLine().split(" ", 2);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            String cmd = s[0];
+            String arg = s.length > 1 ? s[1] : null;
+
+            if(cmd.equalsIgnoreCase("propose")){
+                    ProcessId pid = new ProcessId("client:" + ++nRequests);
+                System.out.println("making command "+cmd);
+                    for (int r = 0; r < nReplicas; r++) {
+                        env.sendMessage(env.rdupRplicas[r],
+                                new RequestMessage(pid, new Command(pid, 0, s[1])));
+                    }
+                }
+            }
+
+
+        }
+
+
 }
