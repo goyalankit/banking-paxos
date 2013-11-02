@@ -19,7 +19,7 @@ public class Env {
         Process p = procs.get(dst);
         if (p != null) {
             p.deliver(msg);
-        }else{
+        } else {
             //System.err.println("not delivering message to "+dst + " " + procs.toString());
         }
     }
@@ -112,14 +112,14 @@ public class Env {
                             new RequestMessage(pid, new Command(pid, 0, s[1])));
                 }
             } else if (cmd.equalsIgnoreCase("stop")) {
-                System.out.println("making command " + cmd + " key "+"leader:"+s[1]+ " exists " + env.procs.containsKey("leader:"+s[1]));
+                System.out.println("making command " + cmd + " key " + "leader:" + s[1] + " exists " + env.procs.containsKey("leader:" + s[1]));
                 System.out.println("keys " + env.procs.toString());
-                Leader l = (Leader)env.procs.get(env.leaders[Integer.parseInt(s[1])]);
+                Leader l = (Leader) env.procs.get(env.leaders[Integer.parseInt(s[1])]);
                 l.setWaiting(true);
             } else if (cmd.equalsIgnoreCase("status")) {
-                System.out.println("making command " + cmd + " key "+"leader:"+s[1]+ " exists " + env.procs.containsKey("leader:"+s[1]));
+                System.out.println("making command " + cmd + " key " + "leader:" + s[1] + " exists " + env.procs.containsKey("leader:" + s[1]));
                 System.out.println("keys " + env.procs.toString());
-                Leader l = (Leader)env.procs.get(env.leaders[Integer.parseInt(s[1])]);
+                Leader l = (Leader) env.procs.get(env.leaders[Integer.parseInt(s[1])]);
                 l.getStatus();
             }
         }

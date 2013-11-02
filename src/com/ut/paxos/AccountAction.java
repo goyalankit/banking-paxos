@@ -13,10 +13,10 @@ public class AccountAction {
         return account;
     }
 
-    public void perform(){
+    public void perform() {
     }
 
-    public void writeToConsole(String s, Boolean isError){
+    public void writeToConsole(String s, Boolean isError) {
         PrintStream out = isError ? System.err : System.out;
         out.print("*** ");
         out.print(s);
@@ -27,19 +27,19 @@ public class AccountAction {
 class Withdraw extends AccountAction {
     private int wdamount;
 
-    public Withdraw(Account account, int amount){
+    public Withdraw(Account account, int amount) {
         super(account);
         this.account = account;
         this.wdamount = amount;
     }
 
     @Override
-    public void perform(){
+    public void perform() {
         int currentBalance = account.getCurrentBalance();
-        if(currentBalance >= wdamount){
+        if (currentBalance >= wdamount) {
             account.setCurrentBalance(currentBalance - wdamount);
-            writeToConsole("Withdraw Successful of $"+wdamount + " final balance "+account.getCurrentBalance(), false);
-        }else{
+            writeToConsole("Withdraw Successful of $" + wdamount + " final balance " + account.getCurrentBalance(), false);
+        } else {
             writeToConsole("Insufficient Balance in Source Account", true);
         }
     }
@@ -48,29 +48,30 @@ class Withdraw extends AccountAction {
         return wdamount;
     }
 
-    public String toString(){
+    public String toString() {
         return "AccountAction(Withdraw(" + account + ", " + wdamount + "))";
     }
 }
 
 class Deposit extends AccountAction {
     private int dpamount;
-    public Deposit(Account account, int amount){
+
+    public Deposit(Account account, int amount) {
         super(account);
         this.account = account;
         this.dpamount = amount;
     }
 
     @Override
-    public void perform(){
+    public void perform() {
         int currentBalance = account.getCurrentBalance();
 
         account.setCurrentBalance(currentBalance + dpamount);
-        writeToConsole("Deposit Successful of $"+dpamount + " final balance "+account.getCurrentBalance(), false);
+        writeToConsole("Deposit Successful of $" + dpamount + " final balance " + account.getCurrentBalance(), false);
 
     }
 
-    public String toString(){
+    public String toString() {
         return "AccountAction(Deposit(" + account + ", " + dpamount + "))";
     }
 }
@@ -78,7 +79,8 @@ class Deposit extends AccountAction {
 class Transfer extends AccountAction {
     private int tamount;
     private Account dstaccount;
-    public Transfer(Account srcaccount, Account dstaccount, int amount){
+
+    public Transfer(Account srcaccount, Account dstaccount, int amount) {
         super(srcaccount);
         this.account = srcaccount;
         this.dstaccount = dstaccount;
@@ -86,35 +88,35 @@ class Transfer extends AccountAction {
     }
 
     @Override
-    public void perform(){
+    public void perform() {
         int currentBalance = account.getCurrentBalance();
-        if(currentBalance >= tamount ){
+        if (currentBalance >= tamount) {
             account.setCurrentBalance(currentBalance - tamount);
             dstaccount.setCurrentBalance(dstaccount.getCurrentBalance() + tamount);
-            writeToConsole("Transfer Successful of $"+ tamount + " final balance "+account.getCurrentBalance(), false);
-        }else{
+            writeToConsole("Transfer Successful of $" + tamount + " final balance " + account.getCurrentBalance(), false);
+        } else {
             writeToConsole("Insufficient Balance in Source Account", true);
         }
     }
 
-    public String toString(){
+    public String toString() {
         return "AccountAction(Transfer(" + account + ", " + tamount + "))";
     }
 }
 
 class Query extends AccountAction {
 
-    public Query(Account account){
+    public Query(Account account) {
         super(account);
         this.account = account;
     }
 
     @Override
-    public void perform(){
-        writeToConsole("Query Successful Current balance for "+account.getAccountNo() + ": "+account.getCurrentBalance(), false);
+    public void perform() {
+        writeToConsole("Query Successful Current balance for " + account.getAccountNo() + ": " + account.getCurrentBalance(), false);
     }
 
-    public String toString(){
-        return "AccountAction(Query(" + account +"))";
+    public String toString() {
+        return "AccountAction(Query(" + account + "))";
     }
 }
