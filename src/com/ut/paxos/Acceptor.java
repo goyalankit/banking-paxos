@@ -18,9 +18,8 @@ public class Acceptor extends Process {
 		for (;;) {
 			PaxosMessage msg = getNextMessage();
 
-			if (msg instanceof P1aMessage) {
+            if (msg instanceof P1aMessage) {
 				P1aMessage m = (P1aMessage) msg;
-
 				if (ballot_number == null ||
 						ballot_number.compareTo(m.ballot_number) < 0) {
 					ballot_number = m.ballot_number;
@@ -29,7 +28,7 @@ public class Acceptor extends Process {
 			}
 			else if (msg instanceof P2aMessage) {
 				P2aMessage m = (P2aMessage) msg;
-
+                System.out.println(me+" Phase 2a proposal received from "+m.ballot_number.getLeader_id() + " with ballot number "+m.ballot_number);
 				if (ballot_number == null ||
 						ballot_number.compareTo(m.ballot_number) <= 0) {
 					ballot_number = m.ballot_number;

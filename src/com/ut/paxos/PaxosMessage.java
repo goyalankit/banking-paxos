@@ -60,3 +60,16 @@ class ProposeMessage extends PaxosMessage {
 	public ProposeMessage(ProcessId src, int slot_number, Command command){
 		this.src = src; this.slot_number = slot_number; this.command = command;
 }	}
+
+class HearBeatMessage extends PaxosMessage {
+    public HearBeatMessage(ProcessId src){
+        this.src = src;
+    }
+
+}
+
+class HearBeatMessageResponse extends PaxosMessage {
+    public HearBeatMessageResponse(ProcessId src){
+        this.src = src;
+    }
+}
