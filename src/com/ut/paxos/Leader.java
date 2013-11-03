@@ -216,20 +216,30 @@ public class Leader extends Process {
     }
 
     public void setIgnoring(boolean ignoring) {
-        System.err.println(me + " set IGNORING " + ignoring);
 
         isIgnoring = ignoring;
-        if (!ignoring) {
-            monitor.kill();
-            heartBeat.kill();
+        System.err.println(me + " set IGNORING " + ignoring);
 
-            if (!currentActiveLeader.equals(me)) {
-                deadProcesses.add(currentActiveLeader);
-                currentActiveLeader = me;
-            }
+        if(!ignoring)
+            cleanUpAfterDeadLeader();
+
+    }
+
+    public void cleanUpAfterDeadLeader(){
+
+        monitor.kill();
+        heartBeat.kill();
+
+        if (!currentActiveLeader.equals(me)) {
+            deadProcesses.add(currentActiveLeader);
+            currentActiveLeader = me;
+
+            //run scout for all buffered and new proposals.
+            new Scout(env, new ProcessId("scout:" + me + ":" + ballot_number), me, acceptors, ballot_number);
         }
 
     }
+
 }
 
 

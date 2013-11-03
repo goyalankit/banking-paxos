@@ -106,21 +106,24 @@ public class Env {
 
             if (cmd.equalsIgnoreCase("propose")) {
                 ProcessId pid = new ProcessId("client:" + ++nRequests);
-                System.out.println("making command " + cmd);
                 for (int r = 0; r < nReplicas; r++) {
                     env.sendMessage(env.rdupRplicas[r],
                             new RequestMessage(pid, new Command(pid, 0, s[1])));
                 }
             } else if (cmd.equalsIgnoreCase("stop")) {
-                System.out.println("making command " + cmd + " key " + "leader:" + s[1] + " exists " + env.procs.containsKey("leader:" + s[1]));
-                System.out.println("keys " + env.procs.toString());
-                Leader l = (Leader) env.procs.get(env.leaders[Integer.parseInt(s[1])]);
+                Leader l = (Leader) env.procs.get(env.leaders[Integer.parseInt(s[1].trim())]);
                 l.setWaiting(true);
             } else if (cmd.equalsIgnoreCase("status")) {
-                System.out.println("making command " + cmd + " key " + "leader:" + s[1] + " exists " + env.procs.containsKey("leader:" + s[1]));
                 System.out.println("keys " + env.procs.toString());
-                Leader l = (Leader) env.procs.get(env.leaders[Integer.parseInt(s[1])]);
-                l.getStatus();
+                Leader l = (Leader) env.procs.get(env.leaders[Integer.parseInt(s[1].trim())]);
+                if(l != null)
+                    l.getStatus();
+                else
+                    System.err.println("Process is dead");
+            } else if(cmd.equals("")){
+                //Just pressing enter or something. don't do anything
+            } else{
+                System.err.println("Invalid Command");
             }
         }
     }
