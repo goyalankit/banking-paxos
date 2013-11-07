@@ -27,10 +27,6 @@ public class Account implements Serializable {
         return accountNo;
     }
 
-    public void setAccountNo(int accountNo) {
-        this.accountNo = accountNo;
-    }
-
     public int getCurrentBalance() {
         return currentBalance;
     }

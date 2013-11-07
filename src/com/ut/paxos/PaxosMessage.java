@@ -114,3 +114,13 @@ class HearBeatMessageResponse extends PaxosMessage {
         this.src = src;
     }
 }
+
+class ServerResponse extends PaxosMessage{
+    String result;
+    int req_id;
+    public ServerResponse(ProcessId src, String result, int req_id){
+        this.src = src;
+        this.result = result;
+        this.req_id = req_id;
+    }
+}

@@ -1,5 +1,8 @@
 package com.ut.paxos;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -7,6 +10,8 @@ import java.util.Set;
 
 public class Replica extends Process {
     ProcessId[] leaders;
+    ProcessId[] clients;
+    String logFile;
     int slot_num = 1;
     Map<Integer /* slot number */, Command> proposals = new HashMap<Integer, Command>();
     Map<Integer /* slot number */, Command> decisions = new HashMap<Integer, Command>();
@@ -18,6 +23,7 @@ public class Replica extends Process {
         this.leaders = leaders;
         this.accounts = new HashSet<Account>();
         env.addProc(me, this);
+        this.logFile = "logs/"+me.name.replace(":", "") + ".log";
     }
 
     void propose(Command c) {
@@ -46,7 +52,11 @@ public class Replica extends Process {
         AccountAction accountAction = createAccountAction(command);
         if (accountAction != null) {
             System.out.println("" + me + ": perform " + c);
+            writeLog("" + me + ": perform " + c);
             accountAction.perform();
+            sendMessage(c.client, new ServerResponse(me, command+" executed", c.req_id));
+
+
         }
         slot_num++;
 
@@ -60,7 +70,7 @@ public class Replica extends Process {
             if (s.length > 2 && s[2] != null) {
                 srcaccount = getAccountFromNum(Integer.parseInt(s[2]));
                 if (srcaccount == null) {
-                    System.err.println("Source Account doesn't exist " + Integer.parseInt(s[2]));
+                    System.err.println(me + "Source Account doesn't exist " + Integer.parseInt(s[2]));
                     return null;
                 }
             }
@@ -127,4 +137,27 @@ public class Replica extends Process {
             }
         }
     }
+
+
+    public void rep_dec(){
+        System.out.println("Order of commands executed by replica "+me);
+        for (int i = 0; i < decisions.size(); i++) {
+            System.out.println(decisions.get(i));
+        }
+    }
+
+    public void writeLog(String msg)
+    {
+        try
+        {
+            BufferedWriter bw = new BufferedWriter(new FileWriter(logFile,true));
+            bw.write(msg+"\n");
+            bw.flush();
+        }
+        catch(IOException io)
+        {
+            System.err.println(io.getMessage());
+        }
+    }
+
 }

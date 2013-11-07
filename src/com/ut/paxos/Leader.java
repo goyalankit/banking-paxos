@@ -1,11 +1,15 @@
 package com.ut.paxos;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.*;
 
 public class Leader extends Process {
     ProcessId[] acceptors;
     ProcessId[] replicas;
     BallotNumber ballot_number;
+    String logFile;
     boolean active = false;
     Map<Integer, Command> proposals = new HashMap<Integer, Command>();
     boolean isWaiting;
@@ -34,6 +38,7 @@ public class Leader extends Process {
         env.addProc(me, this);
         this.deadProcesses = new HashSet<ProcessId>();
         this.currentActiveLeader = me;
+        this.logFile = "logs/"+me.name.replace(":", "") + ".log";
 
     }
 
@@ -86,7 +91,7 @@ public class Leader extends Process {
                     }
 
                     for (int sn : proposals.keySet()) {
-                        System.err.println("I have " + proposals.size() + " proposals");
+                        //System.err.println("I have " + proposals.size() + " proposals");
                         new Commander(env,
                                 new ProcessId("commander:" + me + ":" + ballot_number + ":" + sn),
                                 me, acceptors, replicas, ballot_number, sn, proposals.get(sn));
@@ -95,7 +100,7 @@ public class Leader extends Process {
                 }
             } else if (msg instanceof PreemptedMessage) {
                 PreemptedMessage m = (PreemptedMessage) msg;
-                System.out.println(me + " preempted by leader " + m.ballot_number.getLeader_id());
+                //System.out.println(me + " preempted by leader " + m.ballot_number.getLeader_id() + " received from "+m.src);
 
                 if (ballot_number.compareTo(m.ballot_number) < 0) {
                     ballot_number = new BallotNumber(m.ballot_number.round + 1, me);
@@ -149,7 +154,7 @@ public class Leader extends Process {
         }
 
         public void run() {
-            System.err.println("Monitor started in " + parent.me);
+            //System.err.println("Monitor started in " + parent.me);
             while (isRunning) {
                 if (lastHeartBeat < System.currentTimeMillis() - 3000) {
                     parent.setIgnoring(false);
@@ -238,6 +243,20 @@ public class Leader extends Process {
             new Scout(env, new ProcessId("scout:" + me + ":" + ballot_number), me, acceptors, ballot_number);
         }
 
+    }
+
+    public void writeLog(String msg)
+    {
+        try
+        {
+            BufferedWriter bw = new BufferedWriter(new FileWriter(logFile,true));
+            bw.write(msg+"\n");
+            bw.flush();
+        }
+        catch(IOException io)
+        {
+            System.err.println(io.getMessage());
+        }
     }
 
 }
