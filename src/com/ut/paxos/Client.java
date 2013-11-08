@@ -36,14 +36,22 @@ public class Client extends Process {
     }
 
     public void initCommands(){
+        try {
         if(me.name.equals("client:1")){
             sendCommandToReplicas("cmd Q 1");
+            Thread.sleep(1000);
             sendCommandToReplicas("cmd w 1 20");
+            Thread.sleep(1000);
             sendCommandToReplicas("cmd D 1 40");
         }else{
             sendCommandToReplicas("cmd Q 1");
+            Thread.sleep(500);
             sendCommandToReplicas("cmd D 1 40");
+            Thread.sleep(100);
             sendCommandToReplicas("cmd D 1 40");
+        }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
     }
 

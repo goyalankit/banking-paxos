@@ -12,7 +12,7 @@ public class Env {
     public final static int nAcceptors = 3, nReplicas = 5, nLeaders = 4, nClients = 2, initBalance = 150, nAccounts = 5;
 
     public static int nRequests = 1;
-    private HashMap<Integer, String> requests;
+    //private HashMap<Integer, String> requests;
     private ProcessId[] rdupRplicas;
     private ProcessId[] leaders;
     private ProcessId[] clients;
@@ -39,7 +39,7 @@ public class Env {
         ProcessId[] acceptors = new ProcessId[nAcceptors];
         ProcessId[] replicas = new ProcessId[nReplicas];
         leaders = new ProcessId[nLeaders];
-        requests = new HashMap<Integer, String>();
+        //requests = new HashMap<Integer, String>();
         rdupRplicas = new ProcessId[nReplicas];
         clients = new ProcessId[nClients];
 
@@ -72,9 +72,8 @@ public class Env {
         }
 
         for (int i = 0; i < nReplicas; i++) {
-            ((Replica)procs.get(replicas[i])).clients = clients;
+            ((Replica) procs.get(replicas[i])).clients = clients;
         }
-
 /*
         for (int i = 1; i < nRequests; i++) {
             ProcessId pid = new ProcessId("client:" + i);
@@ -85,7 +84,6 @@ public class Env {
             }
         }
 */
-
     }
 
 
@@ -108,63 +106,57 @@ public class Env {
 
             String arg = s.length > 1 ? s[1] : null;
 
-            if (cmd.equalsIgnoreCase("propose")) {
-                String[] s1 = new String[0];
-                s1 = s[1].split(" ", 2);
 
-                Client client = (Client)env.procs.get(env.clients[Integer.parseInt(s1[0].trim())]);
-                client.sendCommandToReplicas(s1[1]);
-            }
+            try {
+                if (cmd.equalsIgnoreCase("propose")) {
+                    String[] s1 = new String[0];
+                    s1 = s[1].split(" ", 2);
 
-            else if (cmd.equalsIgnoreCase("stop")) {
-                Leader l = (Leader) env.procs.get(env.leaders[Integer.parseInt(s[1].trim())]);
-                l.setWaiting(true);
-            }
-
-            else if (cmd.equalsIgnoreCase("rep_dec")) {
+                    Client client = (Client) env.procs.get(env.clients[Integer.parseInt(s1[0].trim())]);
+                    client.sendCommandToReplicas(s1[1]);
+                } else if (cmd.equalsIgnoreCase("stop")) {
+                    Leader l = (Leader) env.procs.get(env.leaders[Integer.parseInt(s[1].trim())]);
+                    l.setWaiting(true);
+                } else if (cmd.equalsIgnoreCase("rep_dec")) {
                     Replica r = (Replica) env.procs.get(env.rdupRplicas[Integer.parseInt(s[1].trim())]);
                     r.rep_dec();
-            }
+                } else if (cmd.equalsIgnoreCase("clear")) {
+                    File dir = new File("logs");
+                    for (File file : dir.listFiles()) file.delete();
+                    System.out.println("**** all log files cleared ****");
+                } else if (cmd.equalsIgnoreCase("status")) {
+                    System.out.println("keys " + env.procs.toString());
+                    Leader l = (Leader) env.procs.get(env.leaders[Integer.parseInt(s[1].trim())]);
+                    if (l != null)
+                        l.getStatus();
+                    else
+                        System.err.println("Process is dead");
+                } else if (cmd.equals("")) {
+                    //Just pressing enter or something. don't do anything
+                } else if (cmd.equals("exit")) {
+                    System.exit(0);
+                } else if (cmd.equalsIgnoreCase("help")) {
+                    String m = "";
+                    m += "List of valid commands:";
+                    m += "\n\tpropose [<client_num>] cmd [q,w,d,t] [<account_num>]  - account operations";
+                    m += "\n\tstop [<num>] - stops (or 'crashes') the leader with the number <num>.";
+                    m += "\n\trep_dec [<num>] - reports the decision values of replicas";
+                    m += "\n\tclear - clears all nodes' logs";
+                    m += "\n\texit - stops all nodes and exits";
+                    m += "\n\thelp - displays this list";
+                    System.out.println("\n" + m + "\n");
+                } else {
+                    System.err.println("Invalid Command");
+                }
+            } catch (NumberFormatException e) {
+                System.err.println("Invalid Command String passed in place of a number. Type help to get list of commands");
+            } catch (Exception e) {
+                System.err.println("Invalid command.");
 
-            else if(cmd.equalsIgnoreCase("clear")){
-                File dir = new File("logs");
-                for(File file: dir.listFiles()) file.delete();
-                System.out.println("**** all log files cleared ****");
-            }
-
-            else if (cmd.equalsIgnoreCase("status")) {
-                System.out.println("keys " + env.procs.toString());
-                Leader l = (Leader) env.procs.get(env.leaders[Integer.parseInt(s[1].trim())]);
-                if(l != null)
-                    l.getStatus();
-                else
-                    System.err.println("Process is dead");
-            }
-
-            else if(cmd.equals("")){
-                //Just pressing enter or something. don't do anything
-            }
-            else if(cmd.equals("exit")){
-                System.exit(0);
-            }
-
-            else if(cmd.equalsIgnoreCase("help"))
-            {
-                String m = "";
-                m += "List of valid commands:";
-                m += "\n\tpropose [<client_num>] cmd [q,w,d,t] [<account_num>]  - account operations";
-                m += "\n\tstop [<num>] - stops (or 'crashes') the leader with the number <num>.";
-                m += "\n\trep_dec [<num>] - reports the decision values of replicas";
-                m += "\n\tclear - clears all nodes' logs";
-                m += "\n\texit - stops all nodes and exits";
-                m += "\n\thelp - displays this list";
-                System.out.println("\n" + m + "\n");
-            }
-
-            else{
-                System.err.println("Invalid Command");
             }
         }
+
+
     }
 }
 

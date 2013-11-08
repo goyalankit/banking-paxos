@@ -141,7 +141,7 @@ public class Replica extends Process {
 
     public void rep_dec(){
         System.out.println("Order of commands executed by replica "+me);
-        for (int i = 0; i < decisions.size(); i++) {
+        for (int i = 1; i < decisions.size() + 1; i++) {
             System.out.println(decisions.get(i));
         }
     }
