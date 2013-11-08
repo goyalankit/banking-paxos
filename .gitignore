@@ -19,3 +19,7 @@ logs/
 .idea/
 *.iml
 *.iws
+
+
+#Mac files
+.DS_Store
