@@ -111,7 +111,6 @@ public class Env {
                 if (cmd.equalsIgnoreCase("propose")) {
                     String[] s1 = new String[0];
                     s1 = s[1].split(" ", 2);
-
                     Client client = (Client) env.procs.get(env.clients[Integer.parseInt(s1[0].trim())]);
                     client.sendCommandToReplicas(s1[1]);
                 } else if (cmd.equalsIgnoreCase("stop")) {
@@ -140,7 +139,8 @@ public class Env {
                     m += "List of valid commands:";
                     m += "\n\tpropose [<client_num>] cmd [q,w,d,t] [<account_num>]  - account operations";
                     m += "\n\tstop [<num>] - stops (or 'crashes') the leader with the number <num>.";
-                    m += "\n\trep_dec [<num>] - reports the decision values of replicas";
+                    m += "\n\trep_dec [<num>] - reports the decision values of replica [<num>]";
+                    m += "\n\tstatus [<num>] - reports the status of leader [<num>]";                    
                     m += "\n\tclear - clears all nodes' logs";
                     m += "\n\texit - stops all nodes and exits";
                     m += "\n\thelp - displays this list";
