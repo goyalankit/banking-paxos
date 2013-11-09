@@ -1,0 +1,20 @@
+Test 1:
+nReplicas: 2
+nLeaders: 2
+nAcceptors:  3
+
+Flow :
+Leader 1 is master leader. Leader 0 gets preempted.
+
+Leader 1 doesn't send ping to leader 0
+Leader 0 becomes leader again
+
+Client sends a request to both the leaders now
+
+Leader 1 gets pre-empted when it sends the commander and starts listening to Leader 0.
+Leader 0 gets the values decided and sends decision to all
+
+How to simulate:
+propose 1 cmd w 1 20
+ping-timout
+propose 1 cmd w 1 30 #leader:1 gets preempted here.

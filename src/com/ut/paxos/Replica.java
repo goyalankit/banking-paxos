@@ -31,8 +31,10 @@ public class Replica extends Process {
             for (int s = 1; ; s++) {
                 if (!proposals.containsKey(s) && !decisions.containsKey(s)) {
                     proposals.put(s, c);
+                    writeLog(me+" <propose, < slot:  "+s+" command: "+ c+" ");
                     for (ProcessId ldr : leaders) {
                         //System.out.println("sending message to "+ldr);
+
                         sendMessage(ldr, new ProposeMessage(me, s, c));
                     }
                     break;
@@ -55,8 +57,6 @@ public class Replica extends Process {
             writeLog("" + me + ": perform " + c);
             accountAction.perform();
             sendMessage(c.client, new ServerResponse(me, command+" executed", c.req_id));
-
-
         }
         slot_num++;
 
@@ -142,7 +142,7 @@ public class Replica extends Process {
     public void rep_dec(){
         System.out.println("Order of commands executed by replica "+me);
         for (int i = 1; i < decisions.size() + 1; i++) {
-            System.out.println(decisions.get(i));
+            System.out.println("s: "+i+ " "+decisions.get(i));
         }
     }
 

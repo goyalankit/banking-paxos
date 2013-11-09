@@ -26,6 +26,9 @@ public class Leader extends Process {
 
     boolean isIgnoring;
 
+    //test variables
+    boolean causeLeaderPingTimout;
+
     public Leader(Env env, ProcessId me, ProcessId[] acceptors,
                   ProcessId[] replicas) {
         this.env = env;
@@ -38,6 +41,7 @@ public class Leader extends Process {
         env.addProc(me, this);
         this.deadProcesses = new HashSet<ProcessId>();
         this.currentActiveLeader = me;
+        this.causeLeaderPingTimout = false;
         this.logFile = "logs/"+me.name.replace(":", "") + ".log";
 
     }
@@ -54,14 +58,17 @@ public class Leader extends Process {
             if (msg instanceof HearBeatMessage) {
                 HearBeatMessage m = (HearBeatMessage) msg;
                 HearBeatMessageResponse hearBeatMessageResponse = new HearBeatMessageResponse(me);
-                sendMessage(m.src, hearBeatMessageResponse);
-                //System.err.println("heartbeat message received");
+                if(allowedToSendHeartBeat(m.src))
+                    sendMessage(m.src, hearBeatMessageResponse);
+
             } else if (msg instanceof HearBeatMessageResponse) {
+
                 HearBeatMessageResponse m = (HearBeatMessageResponse) msg;
                 if (monitor != null && monitor.getCurrent().equals(m.src)) {
                     monitor.resetTimeout();
                 } else
                     System.err.println("Monitor process is not running");
+
                 //we are cool keep waiting.
             } else if (msg instanceof ProposeMessage) {
                 ProposeMessage m = (ProposeMessage) msg;
@@ -125,7 +132,6 @@ public class Leader extends Process {
             }
         }
     }
-
 
     public void startMonitoring(ProcessId leader) {
 
@@ -216,9 +222,7 @@ public class Leader extends Process {
         isWaiting = waiting;
     }
 
-    public void getStatus() {
-        System.out.println("Ignore " + isIgnoring + " | Waiting " + isWaiting + " | CurrentLeader " + currentActiveLeader);
-    }
+
 
     public void setIgnoring(boolean ignoring) {
 
@@ -243,6 +247,26 @@ public class Leader extends Process {
             new Scout(env, new ProcessId("scout:" + me + ":" + ballot_number), me, acceptors, ballot_number);
         }
 
+    }
+
+
+    /*Operational Methods*/
+
+    //Method for testing
+    public boolean allowedToSendHeartBeat(ProcessId processId){
+        if(causeLeaderPingTimout){
+            if(me.name.equals("leader:1") && processId.name.equals("leader:0"))
+                return false;
+        }
+        return true;
+    }
+
+    public void getStatus() {
+        System.out.println("Ignore " + isIgnoring + " | Waiting " + isWaiting + " | CurrentLeader " + currentActiveLeader);
+    }
+
+    public void setCauseLeaderPingTimout(boolean causeLeaderPingTimout) {
+        this.causeLeaderPingTimout = causeLeaderPingTimout;
     }
 
     public void writeLog(String msg)

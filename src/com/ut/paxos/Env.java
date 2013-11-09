@@ -9,7 +9,7 @@ import java.util.Map;
 
 public class Env {
     Map<ProcessId, Process> procs = new HashMap<ProcessId, Process>();
-    public final static int nAcceptors = 3, nReplicas = 5, nLeaders = 4, nClients = 2, initBalance = 150, nAccounts = 5;
+    public final static int nAcceptors = 3, nReplicas = 2, nLeaders = 2, nClients = 2, initBalance = 150, nAccounts = 5;
 
     public static int nRequests = 1;
     //private HashMap<Integer, String> requests;
@@ -103,9 +103,7 @@ public class Env {
             }
 
             String cmd = s[0];
-
             String arg = s.length > 1 ? s[1] : null;
-
 
             try {
                 if (cmd.equalsIgnoreCase("propose")) {
@@ -116,7 +114,13 @@ public class Env {
                 } else if (cmd.equalsIgnoreCase("stop")) {
                     Leader l = (Leader) env.procs.get(env.leaders[Integer.parseInt(s[1].trim())]);
                     l.setWaiting(true);
-                } else if (cmd.equalsIgnoreCase("rep_dec")) {
+                    System.out.println("**** stopping leader "+ l.me +" ****");
+                }else if (cmd.equalsIgnoreCase("ping-timeout")) {
+                    Leader l = (Leader) env.procs.get(env.leaders[1]);
+                    l.setCauseLeaderPingTimout(true);
+                    System.out.println("**** Leader:1 will stop sending ping responses to Leader:0 ****");
+                }
+                else if (cmd.equalsIgnoreCase("rep_dec")) {
                     Replica r = (Replica) env.procs.get(env.rdupRplicas[Integer.parseInt(s[1].trim())]);
                     r.rep_dec();
                 } else if (cmd.equalsIgnoreCase("clear")) {
@@ -140,7 +144,8 @@ public class Env {
                     m += "\n\tpropose [<client_num>] cmd [q,w,d,t] [<account_num>]  - account operations";
                     m += "\n\tstop [<num>] - stops (or 'crashes') the leader with the number <num>.";
                     m += "\n\trep_dec [<num>] - reports the decision values of replica [<num>]";
-                    m += "\n\tstatus [<num>] - reports the status of leader [<num>]";                    
+                    m += "\n\tstatus [<num>] - reports the status of leader [<num>]";
+                    m += "\n\tping-timeout - causes the leader 1 to timeout on leader 0";
                     m += "\n\tclear - clears all nodes' logs";
                     m += "\n\texit - stops all nodes and exits";
                     m += "\n\thelp - displays this list";
@@ -155,8 +160,6 @@ public class Env {
 
             }
         }
-
-
     }
 }
 
