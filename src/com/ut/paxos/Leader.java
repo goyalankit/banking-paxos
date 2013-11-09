@@ -8,6 +8,8 @@ import java.util.*;
 public class Leader extends Process {
     ProcessId[] acceptors;
     ProcessId[] replicas;
+    ProcessId[] leaders;
+
     BallotNumber ballot_number;
     String logFile;
     boolean active = false;
@@ -28,6 +30,7 @@ public class Leader extends Process {
 
     //test variables
     boolean causeLeaderPingTimout;
+    boolean singleLeaderOnInception;
 
     public Leader(Env env, ProcessId me, ProcessId[] acceptors,
                   ProcessId[] replicas) {
@@ -42,18 +45,31 @@ public class Leader extends Process {
         this.deadProcesses = new HashSet<ProcessId>();
         this.currentActiveLeader = me;
         this.causeLeaderPingTimout = false;
+        this.singleLeaderOnInception = false;
         this.logFile = "logs/"+me.name.replace(":", "") + ".log";
 
     }
 
     public void body() {
+        boolean init = true;
 
         System.out.println("Here I am: " + me);
 
 //		new Scout(env, new ProcessId("scout:" + me + ":" + ballot_number),
 //			me, acceptors, ballot_number);
+
         while (!isWaiting) {
             PaxosMessage msg = getNextMessage();
+
+            if(singleLeaderOnInception){
+                if(init && !me.equals(leaders[0])){
+                    if(!isIgnoring)
+                        setIgnoring(true);
+                    startMonitoring(leaders[0]);
+                    init = false;
+                    continue;
+                }
+            }
 
             if (msg instanceof HearBeatMessage) {
                 HearBeatMessage m = (HearBeatMessage) msg;
@@ -268,6 +284,7 @@ public class Leader extends Process {
     public void setCauseLeaderPingTimout(boolean causeLeaderPingTimout) {
         this.causeLeaderPingTimout = causeLeaderPingTimout;
     }
+
 
     public void writeLog(String msg)
     {

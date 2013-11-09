@@ -65,6 +65,10 @@ public class Env {
             Leader leader = new Leader(this, leaders[i], acceptors, replicas);
         }
 
+        for (int k = 0; k < nLeaders; k++) {
+            ((Leader)procs.get(leaders[k])).leaders = leaders;
+        }
+
         //create clients
         for (int i = 0; i < nClients; i++) {
             clients[i] = new ProcessId("client:" + i);
