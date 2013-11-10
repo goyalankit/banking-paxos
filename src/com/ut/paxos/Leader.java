@@ -39,7 +39,7 @@ public class Leader extends Process {
     private boolean activeLease;
     Map<Command, Integer /* Maximum slot number */> readAcks = new HashMap<Command, Integer>();
     int currentSlotNumber;
-    long leaseTimeout = 3000;
+    long leaseTimeout = 7000;
     long leaseEnd;
 
 
@@ -107,10 +107,10 @@ public class Leader extends Process {
                 readAcks.put(m.command, 1);
             }*/ else if (msg instanceof ProposeMessage) {
                 ProposeMessage m = (ProposeMessage) msg;
+
                 if (!isIgnoring && isReadOnly(m.command) && m.slot_number == -1) {
                     if (!readSlot.containsKey(m.command)){
                         new Scout(env, new ProcessId("scout:" + me + ":" + ballot_number), me, acceptors, ballot_number, true);
-                        System.err.println(me+ " inserting in readslot");
                         if(proposals.isEmpty())
                             readSlot.put(m.command, 0);
                         else
@@ -133,7 +133,7 @@ public class Leader extends Process {
             } else if (msg instanceof AdoptedMessage) {
 
                 AdoptedMessage m = (AdoptedMessage) msg;
-                System.out.println("Adopted by " + m.src + " read slot size "+readSlot.size());
+                System.out.println("Adopted by " + m.src);
                 if (ballot_number.equals(m.ballot_number)) {
                     Map<Integer, BallotNumber> max = new HashMap<Integer, BallotNumber>();
                     for (PValue pv : m.accepted) {
@@ -154,8 +154,6 @@ public class Leader extends Process {
                             if(activeLease && System.currentTimeMillis() < leaseEnd){
                                 currentSlotNumber = Collections.min(readSlot.values());
                                 executeReadOnlyCommands();
-                            }else{
-                                new Scout(env, new ProcessId("scout:" + me + ":" + ballot_number), me, acceptors, ballot_number, true);
                             }
                         }
                     }
@@ -203,12 +201,7 @@ public class Leader extends Process {
     }
 
     public void executeReadOnlyCommands() {
-        if(me.name.equals("leader:1")){
-            setWaiting(true);
-            return;
-        }
-
-        Set <Command> commandsSent = new HashSet<Command>();
+        Set<Command> commandsSent = new HashSet<Command>();
         for (Command cmd : readSlot.keySet()) {
             for (int i = 0; i < replicas.length; i++) {
                 if (currentSlotNumber >= readSlot.get(cmd)) {
