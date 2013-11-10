@@ -72,7 +72,7 @@ public class Env {
         //create clients
         for (int i = 0; i < nClients; i++) {
             clients[i] = new ProcessId("client:" + i);
-            Client client = new Client(this, clients[i], null, replicas, Integer.parseInt(args[0]));
+            Client client = new Client(this, clients[i], null, replicas);
         }
 
         for (int i = 0; i < nReplicas; i++) {

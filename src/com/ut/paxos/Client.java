@@ -13,7 +13,6 @@ public class Client extends Process {
     int numberOfRequests;
     String logFile;
     HashMap<Integer, Integer> successfulTransactions;
-    int testCase;
 
     public void body() {
         System.out.println("Here I am: " + me);
@@ -30,7 +29,7 @@ public class Client extends Process {
         }
     }
 
-    public Client(Env env, ProcessId me, Set <Account> accounts, ProcessId[] replicas, int testCase) {
+    public Client(Env env, ProcessId me, Set <Account> accounts, ProcessId[] replicas) {
         this.env = env;
       //  this.accounts = accounts;
         this.me = me;
@@ -40,12 +39,11 @@ public class Client extends Process {
         env.addProc(me, this);
         successfulTransactions = new HashMap<Integer, Integer>();
         this.logFile = "logs/"+me.name.replace(":", "") + ".log";
-        this.testCase = testCase;
 
     }
 
-    public void initCommands(int testCase){
-        testCases(testCase);
+    public void initCommands(){
+        testCases(1);
 
     }
 
