@@ -15,6 +15,7 @@ public class Replica extends Process {
     int slot_num = 1;
     Map<Integer /* slot number */, Command> proposals = new HashMap<Integer, Command>();
     Map<Integer /* slot number */, Command> decisions = new HashMap<Integer, Command>();
+    Map<Command, Integer> readBuffer = new HashMap<Command, Integer>();
     Set<Account> accounts;
 
     public Replica(Env env, ProcessId me, ProcessId[] leaders) {
@@ -22,22 +23,27 @@ public class Replica extends Process {
         this.me = me;
         this.leaders = leaders;
         this.accounts = new HashSet<Account>();
+
         env.addProc(me, this);
-        this.logFile = "logs/"+me.name.replace(":", "") + ".log";
+        this.logFile = "logs/" + me.name.replace(":", "") + ".log";
     }
 
     void propose(Command c) {
         if (!decisions.containsValue(c)) {
-            for (int s = 1; ; s++) {
-                if (!proposals.containsKey(s) && !decisions.containsKey(s)) {
-                    proposals.put(s, c);
-                    writeLog(me+" <propose, < slot:  "+s+" command: "+ c+" ");
-                    for (ProcessId ldr : leaders) {
-                        //System.out.println("sending message to "+ldr);
-
-                        sendMessage(ldr, new ProposeMessage(me, s, c));
+            if (!isReadOnly(c)) {
+                for (int s = 1; ; s++) {
+                    if (!proposals.containsKey(s) && !decisions.containsKey(s)) {
+                        proposals.put(s, c);
+                        writeLog(me + " <propose, < slot:  " + s + " command: " + c + " ");
+                        for (ProcessId ldr : leaders) {
+                            sendMessage(ldr, new ProposeMessage(me, s, c));
+                        }
+                        break;
                     }
-                    break;
+                }
+            } else {
+                for (ProcessId ldr : leaders) {
+                    sendMessage(ldr, new ProposeMessage(me, -1, c));
                 }
             }
         }
@@ -56,10 +62,28 @@ public class Replica extends Process {
             System.out.println("" + me + ": perform " + c);
             writeLog("" + me + ": perform " + c);
             accountAction.perform();
-            sendMessage(c.client, new ServerResponse(me, command+" executed", c.req_id));
+            sendMessage(c.client, new ServerResponse(me, command + " executed", c.req_id));
+            executePendingCommands();
         }
         slot_num++;
 
+    }
+
+    public void executePendingCommands() {
+        Set<Command> commandsExecuted = new HashSet<Command>();
+
+        for (Command command : readBuffer.keySet()) {
+            if (readBuffer.get(command) == 0 || decisions.containsKey(readBuffer.get(command))) {
+                AccountAction accountAction = createAccountAction((String) command.op);
+                accountAction.perform();
+                sendMessage(command.client, new ServerResponse(me, command + " executed", command.req_id));
+                commandsExecuted.add(command);
+                writeLog(me + " executed " + command);
+            }
+        }
+
+        for(Command cmd : commandsExecuted)
+            readBuffer.remove(cmd);
     }
 
     private AccountAction createAccountAction(String command) {
@@ -116,6 +140,7 @@ public class Replica extends Process {
             PaxosMessage msg = getNextMessage();
 
             if (msg instanceof RequestMessage) {
+
                 RequestMessage m = (RequestMessage) msg;
                 propose(m.command);
             } else if (msg instanceof DecisionMessage) {
@@ -132,30 +157,50 @@ public class Replica extends Process {
                     }
                     perform(c);
                 }
+            } else if (msg instanceof ReadOnlyCommandMessage) {
+                System.err.println(me + " Read-only for me!");
+                ReadOnlyCommandMessage m = (ReadOnlyCommandMessage) msg;
+                if (m.minSlot == 0 || decisions.containsKey(m.minSlot)) {
+                    String command = (String) m.command.op;
+                    AccountAction accountAction = createAccountAction(command);
+                    accountAction.perform();
+                    sendMessage(m.command.client, new ServerResponse(me, command + " executed", m.command.req_id));
+                    writeLog(me + " executed " + m.command);
+                    //sendMessage(m.src, new ReadOnlyAckMessage(this.me, m.command));
+                } else {
+                    readBuffer.put(m.command, m.minSlot);
+                }
             } else {
                 System.err.println("Replica: unknown msg type");
             }
         }
     }
 
+    public boolean isReadOnly(Command command) {
+        try {
+            String[] s = ((String) (command.op)).split(" ");
+            if (s[1].equalsIgnoreCase("q")) {
+                return true;
+            }
+        } catch (Exception e) {
+            System.err.println("invalid command");
+        }
+        return false;
+    }
 
-    public void rep_dec(){
-        System.out.println("Order of commands executed by replica "+me);
+    public void rep_dec() {
+        System.out.println("Order of commands executed by replica " + me);
         for (int i = 1; i < decisions.size() + 1; i++) {
-            System.out.println("s: "+i+ " "+decisions.get(i));
+            System.out.println("s: " + i + " " + decisions.get(i));
         }
     }
 
-    public void writeLog(String msg)
-    {
-        try
-        {
-            BufferedWriter bw = new BufferedWriter(new FileWriter(logFile,true));
-            bw.write(msg+"\n");
+    public void writeLog(String msg) {
+        try {
+            BufferedWriter bw = new BufferedWriter(new FileWriter(logFile, true));
+            bw.write(msg + "\n");
             bw.flush();
-        }
-        catch(IOException io)
-        {
+        } catch (IOException io) {
             System.err.println(io.getMessage());
         }
     }

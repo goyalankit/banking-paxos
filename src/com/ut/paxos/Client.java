@@ -16,7 +16,7 @@ public class Client extends Process {
 
     public void body() {
         System.out.println("Here I am: " + me);
-        initCommands();
+        //initCommands();
         while (true){
             PaxosMessage msg = getNextMessage();
             if (msg instanceof ServerResponse) {
@@ -25,8 +25,6 @@ public class Client extends Process {
                     writeLog(m.req_id+": "+m.result);
                     successfulTransactions.put(m.req_id, 1);
                 }
-
-
             }
         }
     }
@@ -102,7 +100,7 @@ public class Client extends Process {
     public void sendCommandToReplicas(String request) {
         System.out.println("inside cliente");
         for (int r = 0; r < replicas.length; r++) {
-            System.out.println("making request " + request);
+            //System.out.println("making request " + request);
             sendMessage(replicas[r],
                     new RequestMessage(this.me, new Command(this.me, numberOfRequests, request)));
         }
