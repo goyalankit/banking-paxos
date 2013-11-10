@@ -114,7 +114,7 @@ public class Env {
                     String[] s1 = new String[0];
                     s1 = s[1].split(" ", 2);
                     Client client = (Client) env.procs.get(env.clients[Integer.parseInt(s1[0].trim())]);
-                    client.sendCommandToReplicas(s1[1], false);
+                    client.sendCommandToReplicas(s1[1]);
                 } else if (cmd.equalsIgnoreCase("stop")) {
                     Leader l = (Leader) env.procs.get(env.leaders[Integer.parseInt(s[1].trim())]);
                     l.setWaiting(true);
