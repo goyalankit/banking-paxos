@@ -73,7 +73,7 @@ public class Acceptor extends Process {
 
         } else if (msg instanceof P2aMessage) {
             P2aMessage m = (P2aMessage) msg;
-            System.out.println(me + " Phase 2a proposal received from " + m.ballot_number.getLeader_id() + " "+ m.command +" " + " with ballot number " + m.ballot_number);
+            //System.out.println(me + " Phase 2a proposal received from " + m.ballot_number.getLeader_id() + " "+ m.command +" " + " with ballot number " + m.ballot_number);
             //System.err.println(me+" Phase 2a received for  "+m.command);
             if (ballot_number == null ||
                     ballot_number.compareTo(m.ballot_number) <= 0) {

@@ -13,6 +13,7 @@ public class Client extends Process {
     int numberOfRequests;
     String logFile;
     HashMap<Integer, Integer> successfulTransactions;
+    int latestReqId;
 
     public void body() {
         System.out.println("Here I am: " + me);
@@ -22,8 +23,10 @@ public class Client extends Process {
             if (msg instanceof ServerResponse) {
                 ServerResponse m = (ServerResponse) msg;
                 if(!successfulTransactions.containsKey(m.req_id)){
+                    System.err.println("Received the response from server for req id "+m.req_id);
                     writeLog(m.req_id+": "+m.result);
                     successfulTransactions.put(m.req_id, 1);
+                    latestReqId = m.req_id;
                 }
             }
         }
@@ -38,6 +41,7 @@ public class Client extends Process {
         System.err.println("Addin client to proc "+me);
         env.addProc(me, this);
         successfulTransactions = new HashMap<Integer, Integer>();
+        this.latestReqId = -1;
         this.logFile = "logs/"+me.name.replace(":", "") + ".log";
 
     }
@@ -99,6 +103,11 @@ public class Client extends Process {
     }
 
     public void sendCommandToReplicas(String request) {
+        if(!canSendCommand(request, numberOfRequests)){
+            System.err.println(me+" Cannot send command yet. Waiting for the response to previous command.");
+            return;
+        }
+
         System.out.println("inside cliente");
         for (int r = 0; r < replicas.length; r++) {
             //System.out.println("making request " + request);
@@ -109,6 +118,11 @@ public class Client extends Process {
     }
 
     public void sendCommandToReplicas(String request,int replicaNumber, int req_id){
+
+        if(!canSendCommand(request, req_id)){
+            System.err.println(me+" Cannot send command yet. Waiting for the response to previous command.");
+            return;
+        }
         sendMessage(replicas[replicaNumber],
                 new RequestMessage(this.me, new Command(this.me, req_id, request)));
     }
@@ -118,6 +132,14 @@ public class Client extends Process {
         numberOfRequests++;
     }
 
+
+    public boolean canSendCommand(String request, int proposed_req_id){
+        System.err.println("proposed req id "+proposed_req_id + " actual req id "+latestReqId);
+        if((proposed_req_id - 1) == latestReqId){
+            return true;
+        }
+        return false;
+    }
 
 
     public void writeLog(String msg)
