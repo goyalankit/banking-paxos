@@ -79,7 +79,7 @@ public class Client extends Process {
                     //nReplicas: 2, Leaders: 1, Acceptors: 3
                     //Replica One doesn't get request from client 1
                     if (me.name.equals("client:0")) {
-                        sendCommandToReplicas("cmd w 1 20");
+                        sendCommandToReplicas("cmd w 1 20", false);
                     }
                     else{
                         sendCommandToReplicas("cmd w 1 20", 0);
@@ -89,7 +89,7 @@ public class Client extends Process {
                     //nReplicas: 2, Leaders: 2, Acceptors: 3
                     //Replica One doesn't get request from client 1
                     if (me.name.equals("client:0")) {
-                        sendCommandToReplicas("cmd w 1 20");
+                        sendCommandToReplicas("cmd w 1 20", false);
                     }
 
                     break;
@@ -102,7 +102,10 @@ public class Client extends Process {
         }
     }
 
-    public void sendCommandToReplicas(String request) {
+    public void sendCommandToReplicas(String request, boolean previousRequest) {
+
+        if(previousRequest)
+            numberOfRequests--;
 
         if(!canSendCommand(request, numberOfRequests)){
             System.err.println(me+" Cannot send command yet. Waiting for the response to previous command.");

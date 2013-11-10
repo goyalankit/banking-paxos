@@ -73,7 +73,7 @@ public class Leader extends Process {
         while (!isWaiting) {
             PaxosMessage msg = getNextMessage();
 
-            //if(singleLeaderOnInception){
+            if(singleLeaderOnInception){
                 if(init && !me.equals(leaders[0])){
                     if(!isIgnoring)
                         setIgnoring(true);
@@ -81,7 +81,7 @@ public class Leader extends Process {
                     init = false;
                     continue;
                 }
-//            }
+            }
 
             if (msg instanceof HearBeatMessage) {
                 HearBeatMessage m = (HearBeatMessage) msg;
@@ -107,11 +107,9 @@ public class Leader extends Process {
                 readAcks.put(m.command, 1);
             }*/ else if (msg instanceof ProposeMessage) {
                 ProposeMessage m = (ProposeMessage) msg;
-
-                if (isReadOnly(m.command) && m.slot_number == -1) {
+                if (!isIgnoring && isReadOnly(m.command) && m.slot_number == -1) {
                     if (!readSlot.containsKey(m.command)){
-                        if(!isIgnoring)
-                            new Scout(env, new ProcessId("scout:" + me + ":" + ballot_number), me, acceptors, ballot_number, true);
+                        new Scout(env, new ProcessId("scout:" + me + ":" + ballot_number), me, acceptors, ballot_number, true);
                         System.err.println(me+ " inserting in readslot");
                         if(proposals.isEmpty())
                             readSlot.put(m.command, 0);
@@ -151,11 +149,13 @@ public class Leader extends Process {
                         leaseEnd = System.currentTimeMillis() + leaseTimeout;
                     }
 
-                    if(proposals.isEmpty() && !isIgnoring){
+                    if(proposals.isEmpty()){
                         if (!readSlot.isEmpty()) {
                             if(activeLease && System.currentTimeMillis() < leaseEnd){
                                 currentSlotNumber = Collections.min(readSlot.values());
                                 executeReadOnlyCommands();
+                            }else{
+                                new Scout(env, new ProcessId("scout:" + me + ":" + ballot_number), me, acceptors, ballot_number, true);
                             }
                         }
                     }
@@ -222,6 +222,30 @@ public class Leader extends Process {
         for (Command c : commandsSent)
             readSlot.remove(c);
     }
+
+/*
+    class ReadExecutor extends Thread{
+        public void run(){
+            System.err.println("Executing read only commands");
+
+            for(Command cmd : readSlot.keySet()){
+                int slot = readSlot.get(cmd);
+                ackExceptedTill = System.currentTimeMillis() + ackTimeout;
+                int i = 0;
+                //while (readSlot.containsKey(cmd)) {
+                sendMessage(replicas[i], new ReadOnlyCommandMessage(me, cmd, slot));
+                while(ackExceptedTill > System.currentTimeMillis()){
+                    if(!readAcks.isEmpty() && readAcks.get(cmd) == 1){
+                        readSlot.remove(cmd);
+                        break;
+                    }
+                }
+                //}
+            }
+        }
+    }
+*/
+
 
     public void startMonitoring(ProcessId leader) {
 
