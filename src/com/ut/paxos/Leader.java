@@ -203,11 +203,10 @@ public class Leader extends Process {
     }
 
     public void executeReadOnlyCommands() {
-//          ONLY FOR TESTING
-//        if(me.name.equals("leader:1")){
-//            setWaiting(true);
-//            return;
-//        }
+        if(me.name.equals("leader:1")){
+            setWaiting(true);
+            return;
+        }
 
         Set <Command> commandsSent = new HashSet<Command>();
         for (Command cmd : readSlot.keySet()) {
