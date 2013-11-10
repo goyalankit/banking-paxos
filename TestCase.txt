@@ -18,3 +18,18 @@ How to simulate:
 propose 1 cmd w 1 20
 ping-timout
 propose 1 cmd w 1 30 #leader:1 gets preempted here.
+
+
+
+Test Case:
+
+
+Within the same lease period
+Read
+Write
+Read
+
+Read
+Read
+
+

@@ -33,7 +33,6 @@ public class Commander extends Process {
 
         while (2 * waitfor.size() >= acceptors.length) {
             PaxosMessage msg = getNextMessage();
-
             if (msg instanceof P2bMessage) {
                 P2bMessage m = (P2bMessage) msg;
 
@@ -49,6 +48,13 @@ public class Commander extends Process {
         }
 
         for (ProcessId r : replicas) {
+ //            Test case
+            if(r.name.equals("replica:1"))
+                try {
+                    Thread.sleep(20000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
             sendMessage(r, new DecisionMessage(me, slot_number, command));
         }
     }

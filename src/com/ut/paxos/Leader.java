@@ -13,7 +13,10 @@ public class Leader extends Process {
     BallotNumber ballot_number;
     String logFile;
     boolean active = false;
+
     Map<Integer, Command> proposals = new HashMap<Integer, Command>();
+    Map<Command, Integer /* Maximum slot number */> readSlot = new HashMap<Command, Integer>();
+
     boolean isWaiting;
 
     private Monitor monitor;
@@ -32,6 +35,15 @@ public class Leader extends Process {
     boolean causeLeaderPingTimout;
     boolean singleLeaderOnInception;
 
+    //Lease Variable
+    private boolean activeLease;
+    Map<Command, Integer /* Maximum slot number */> readAcks = new HashMap<Command, Integer>();
+    int currentSlotNumber;
+    long leaseTimeout = 7000;
+    long leaseEnd;
+
+
+
     public Leader(Env env, ProcessId me, ProcessId[] acceptors,
                   ProcessId[] replicas) {
         this.env = env;
@@ -47,7 +59,7 @@ public class Leader extends Process {
         this.causeLeaderPingTimout = false;
         this.singleLeaderOnInception = false;
         this.logFile = "logs/"+me.name.replace(":", "") + ".log";
-
+        this.activeLease = false;
     }
 
     public void body() {
@@ -74,7 +86,7 @@ public class Leader extends Process {
             if (msg instanceof HearBeatMessage) {
                 HearBeatMessage m = (HearBeatMessage) msg;
                 HearBeatMessageResponse hearBeatMessageResponse = new HearBeatMessageResponse(me);
-                if(allowedToSendHeartBeat(m.src))
+                if (allowedToSendHeartBeat(m.src))
                     sendMessage(m.src, hearBeatMessageResponse);
 
             } else if (msg instanceof HearBeatMessageResponse) {
@@ -86,8 +98,27 @@ public class Leader extends Process {
                     System.err.println("Monitor process is not running");
 
                 //we are cool keep waiting.
-            } else if (msg instanceof ProposeMessage) {
+            } /*else if (msg instanceof ReadOnlyAckMessage) {
+                ReadOnlyAckMessage m = (ReadOnlyAckMessage) msg;
+                if (!readSlot.isEmpty()) {
+                    readSlot.remove(m.command);
+                    System.err.println("read slot size " + readSlot.size());
+                }
+                readAcks.put(m.command, 1);
+            }*/ else if (msg instanceof ProposeMessage) {
                 ProposeMessage m = (ProposeMessage) msg;
+
+                if (!isIgnoring && isReadOnly(m.command) && m.slot_number == -1) {
+                    if (!readSlot.containsKey(m.command)){
+                        new Scout(env, new ProcessId("scout:" + me + ":" + ballot_number), me, acceptors, ballot_number, true);
+                        if(proposals.isEmpty())
+                            readSlot.put(m.command, 0);
+                        else
+                            readSlot.put(m.command, Collections.max(proposals.keySet()));
+                    }
+                    continue;
+                }
+
                 if (!proposals.containsKey(m.slot_number)) {
                     proposals.put(m.slot_number, m.command);
                     if (active && !isIgnoring) {
@@ -113,19 +144,39 @@ public class Leader extends Process {
                         }
                     }
 
+                    if(m.awardedLease){
+                        activeLease = true;
+                        leaseEnd = System.currentTimeMillis() + leaseTimeout;
+                    }
+
+                    if(proposals.isEmpty()){
+                        if (!readSlot.isEmpty()) {
+                            if(activeLease && System.currentTimeMillis() < leaseEnd){
+                                currentSlotNumber = Collections.min(readSlot.values());
+                                executeReadOnlyCommands();
+                            }
+                        }
+                    }
+
                     for (int sn : proposals.keySet()) {
-                        //System.err.println("I have " + proposals.size() + " proposals");
-                        new Commander(env,
-                                new ProcessId("commander:" + me + ":" + ballot_number + ":" + sn),
-                                me, acceptors, replicas, ballot_number, sn, proposals.get(sn));
+                        if (readSlot.isEmpty()){
+                            new Commander(env, new ProcessId("commander:" + me + ":" + ballot_number + ":" + sn), me, acceptors, replicas, ballot_number, sn, proposals.get(sn));
+                        }
+                        else if (!readSlot.isEmpty() && sn < Collections.min(readSlot.values())) {
+                            new Commander(env, new ProcessId("commander:" + me + ":" + ballot_number + ":" + sn), me, acceptors, replicas, ballot_number, sn, proposals.get(sn));
+                        } else if (!readSlot.isEmpty()) {
+                            if(activeLease && System.currentTimeMillis() < leaseEnd){
+                                currentSlotNumber = Collections.min(readSlot.values());
+                                executeReadOnlyCommands();
+                            }
+                        }
                     }
                     active = true;
                 }
             } else if (msg instanceof PreemptedMessage) {
                 PreemptedMessage m = (PreemptedMessage) msg;
-                //System.out.println(me + " preempted by leader " + m.ballot_number.getLeader_id() + " received from "+m.src);
 
-                if (ballot_number.compareTo(m.ballot_number) < 0) {
+                if (ballot_number.compareTo(m.ballot_number) < 0 || m.ballot_number.round == -1) {
                     ballot_number = new BallotNumber(m.ballot_number.round + 1, me);
 
                     if (!isIgnoring) {
@@ -148,6 +199,45 @@ public class Leader extends Process {
             }
         }
     }
+
+    public void executeReadOnlyCommands() {
+        Set<Command> commandsSent = new HashSet<Command>();
+        for (Command cmd : readSlot.keySet()) {
+            for (int i = 0; i < replicas.length; i++) {
+                if (currentSlotNumber >= readSlot.get(cmd)) {
+                    sendMessage(replicas[i], new ReadOnlyCommandMessage(me, cmd, currentSlotNumber));
+                    commandsSent.add(cmd);
+                }
+            }
+        }
+
+        for (Command c : commandsSent)
+            readSlot.remove(c);
+    }
+
+/*
+    class ReadExecutor extends Thread{
+        public void run(){
+            System.err.println("Executing read only commands");
+
+            for(Command cmd : readSlot.keySet()){
+                int slot = readSlot.get(cmd);
+                ackExceptedTill = System.currentTimeMillis() + ackTimeout;
+                int i = 0;
+                //while (readSlot.containsKey(cmd)) {
+                sendMessage(replicas[i], new ReadOnlyCommandMessage(me, cmd, slot));
+                while(ackExceptedTill > System.currentTimeMillis()){
+                    if(!readAcks.isEmpty() && readAcks.get(cmd) == 1){
+                        readSlot.remove(cmd);
+                        break;
+                    }
+                }
+                //}
+            }
+        }
+    }
+*/
+
 
     public void startMonitoring(ProcessId leader) {
 
@@ -239,18 +329,17 @@ public class Leader extends Process {
     }
 
 
-
     public void setIgnoring(boolean ignoring) {
 
         isIgnoring = ignoring;
         System.err.println(me + " set IGNORING " + ignoring);
 
-        if(!ignoring)
+        if (!ignoring)
             cleanUpAfterDeadLeader();
 
     }
 
-    public void cleanUpAfterDeadLeader(){
+    public void cleanUpAfterDeadLeader() {
 
         monitor.kill();
         heartBeat.kill();
@@ -269,9 +358,9 @@ public class Leader extends Process {
     /*Operational Methods*/
 
     //Method for testing
-    public boolean allowedToSendHeartBeat(ProcessId processId){
-        if(causeLeaderPingTimout){
-            if(me.name.equals("leader:1") && processId.name.equals("leader:0"))
+    public boolean allowedToSendHeartBeat(ProcessId processId) {
+        if (causeLeaderPingTimout) {
+            if (me.name.equals("leader:1") && processId.name.equals("leader:0"))
                 return false;
         }
         return true;
@@ -286,16 +375,25 @@ public class Leader extends Process {
     }
 
 
-    public void writeLog(String msg)
-    {
-        try
-        {
-            BufferedWriter bw = new BufferedWriter(new FileWriter(logFile,true));
-            bw.write(msg+"\n");
-            bw.flush();
+    public boolean isReadOnly(Command command) {
+        try {
+            String[] s = ((String) (command.op)).split(" ");
+            if (s[1].equalsIgnoreCase("q")) {
+                return true;
+            }
+        } catch (Exception e) {
+            System.err.println("invalid command");
         }
-        catch(IOException io)
-        {
+        return false;
+    }
+
+
+    public void writeLog(String msg) {
+        try {
+            BufferedWriter bw = new BufferedWriter(new FileWriter(logFile, true));
+            bw.write(msg + "\n");
+            bw.flush();
+        } catch (IOException io) {
             System.err.println(io.getMessage());
         }
     }

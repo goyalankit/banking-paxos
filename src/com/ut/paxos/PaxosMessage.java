@@ -8,21 +8,32 @@ public class PaxosMessage {
 
 class P1aMessage extends PaxosMessage {
     BallotNumber ballot_number;
+    boolean asking_for_lease;
 
     P1aMessage(ProcessId src, BallotNumber ballot_number) {
         this.src = src;
         this.ballot_number = ballot_number;
+    }
+
+    P1aMessage(ProcessId src, BallotNumber ballot_number, boolean asking_for_lease) {
+        this(src, ballot_number);
+        this.asking_for_lease = asking_for_lease;
     }
 }
 
 class P1bMessage extends PaxosMessage {
     BallotNumber ballot_number;
     Set<PValue> accepted;
+    boolean awardedLease;
 
     P1bMessage(ProcessId src, BallotNumber ballot_number, Set<PValue> accepted) {
         this.src = src;
         this.ballot_number = ballot_number;
         this.accepted = accepted;
+    }
+    P1bMessage(ProcessId src, BallotNumber ballot_number, Set<PValue> accepted, boolean awardedLease) {
+        this(src, ballot_number, accepted);
+        this.awardedLease = awardedLease;
     }
 }
 
@@ -62,11 +73,17 @@ class PreemptedMessage extends PaxosMessage {
 class AdoptedMessage extends PaxosMessage {
     BallotNumber ballot_number;
     Set<PValue> accepted;
+    boolean awardedLease;
 
     AdoptedMessage(ProcessId src, BallotNumber ballot_number, Set<PValue> accepted) {
         this.src = src;
         this.ballot_number = ballot_number;
         this.accepted = accepted;
+    }
+
+    AdoptedMessage(ProcessId src, BallotNumber ballot_number, Set<PValue> accepted, boolean awardedLease) {
+        this(src, ballot_number, accepted);
+        this.awardedLease = awardedLease;
     }
 }
 
