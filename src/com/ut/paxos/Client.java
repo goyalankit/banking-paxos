@@ -13,6 +13,7 @@ public class Client extends Process {
     int numberOfRequests;
     String logFile;
     HashMap<Integer, Integer> successfulTransactions;
+    int testCase;
 
     public void body() {
         System.out.println("Here I am: " + me);
@@ -29,7 +30,7 @@ public class Client extends Process {
         }
     }
 
-    public Client(Env env, ProcessId me, Set <Account> accounts, ProcessId[] replicas) {
+    public Client(Env env, ProcessId me, Set <Account> accounts, ProcessId[] replicas, int testCase) {
         this.env = env;
       //  this.accounts = accounts;
         this.me = me;
@@ -39,11 +40,12 @@ public class Client extends Process {
         env.addProc(me, this);
         successfulTransactions = new HashMap<Integer, Integer>();
         this.logFile = "logs/"+me.name.replace(":", "") + ".log";
+        this.testCase = testCase;
 
     }
 
-    public void initCommands(){
-        testCases(3);
+    public void initCommands(int testCase){
+        testCases(testCase);
 
     }
 
@@ -57,7 +59,7 @@ public class Client extends Process {
                     if (me.name.equals("client:0")) {
                         sendCommandToReplicas("cmd w 1 20", 0, 0);
                     } else {
-                        sendCommandToReplicas("cmd w 1 20", 1, 0);
+                        sendCommandToReplicas("cmd w 1 50", 1, 0);
                     }
                     break;
                 case 2:
@@ -65,9 +67,10 @@ public class Client extends Process {
                     //Replica 1 get the request after the decision. It doesn't proposes.
                     //Same request to different replicas
                     if (me.name.equals("client:0")) {
-                        sendCommandToReplicas("cmd w 1 20", 0, 0);
+                        sendCommandToReplicas("cmd w 1 75", 0, 0);
                         Thread.sleep(4000);
-                        sendCommandToReplicas("cmd w 1 20", 1, 0);
+                        sendCommandToReplicas("cmd w 1 75", 1, 0);
+
                     }
                     break;
                 case 3:
