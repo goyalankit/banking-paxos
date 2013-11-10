@@ -8,6 +8,8 @@
 Paxos.iml
 .idea/
 
+logs/
+
 # Eclipse
 .classpath
 .project
