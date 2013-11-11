@@ -1,5 +1,8 @@
 package com.ut.paxos;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -10,11 +13,14 @@ public class Acceptor extends Process {
     long leaseTime = 10000;
     long leaseTimeout;
     ProcessId currentLeader;
+    String logFile;
+
     public Acceptor(Env env, ProcessId me) {
         this.env = env;
         this.me = me;
         env.addProc(me, this);
         this.leaseActive = false;
+        this.logFile = "logs/"+me.name.replace(":", "") + ".log";
     }
 
     public void body() {
@@ -50,6 +56,8 @@ public class Acceptor extends Process {
             P1aMessage m = (P1aMessage) msg;
             boolean awardedLease = false;
 
+            //writeLog(me+" Phase 1a received from "+m.src);
+
             if (ballot_number == null ||
                     ballot_number.compareTo(m.ballot_number) <= 0) {
                 ballot_number = m.ballot_number;
@@ -75,10 +83,12 @@ public class Acceptor extends Process {
             P2aMessage m = (P2aMessage) msg;
             //System.out.println(me + " Phase 2a proposal received from " + m.ballot_number.getLeader_id() + " "+ m.command +" " + " with ballot number " + m.ballot_number);
             //System.err.println(me+" Phase 2a received for  "+m.command);
+            writeLog(me+" Proposal Received for "+m.command);
             if (ballot_number == null ||
                     ballot_number.compareTo(m.ballot_number) <= 0) {
                 ballot_number = m.ballot_number;
                 accepted.add(new PValue(ballot_number, m.slot_number, m.command));
+                writeLog(me+" Proposal Accepted for "+m.command);
             }
             sendMessage(m.src, new P2bMessage(me, ballot_number, m.slot_number));
         }
@@ -90,18 +100,32 @@ public class Acceptor extends Process {
         LeaseNotifier leaseNotifier = new LeaseNotifier();
         leaseNotifier.start();
         this.currentLeader = currentLeader;
+        writeLog(me+" Grant lease to "+currentLeader.name);
     }
 
     public void unGrantLease(){
         leaseActive = false;
         leaseTimeout = System.currentTimeMillis();
+        writeLog(me+" Expiring Lease for "+currentLeader.name);
         this.currentLeader = null;
     }
 
     public void renewLease(){
         System.out.println("*** Renewing Lease for "+ currentLeader.name + " ***");
+        writeLog(me+" Renew Lease for "+currentLeader.name);
         leaseTimeout = System.currentTimeMillis() + leaseTime;
     }
+
+    public void writeLog(String msg) {
+        try {
+            BufferedWriter bw = new BufferedWriter(new FileWriter(logFile, true));
+            bw.write(msg + "\n");
+            bw.flush();
+        } catch (IOException io) {
+            System.err.println(io.getMessage());
+        }
+    }
+
 
     class LeaseNotifier extends Thread{
 
