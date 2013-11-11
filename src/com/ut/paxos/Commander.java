@@ -48,10 +48,10 @@ public class Commander extends Process {
         }
 
         for (ProcessId r : replicas) {
- //            Test case
-            //if(r.name.equals("replica:1"))
+//            Test case
+//            if(r.name.equals("replica:1"))
 //                try {
-//                    Thread.sleep(2000);
+//                    Thread.sleep(20000);
 //                } catch (InterruptedException e) {
 //                    e.printStackTrace();
 //                }

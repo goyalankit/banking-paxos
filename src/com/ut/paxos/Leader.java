@@ -57,7 +57,7 @@ public class Leader extends Process {
         this.deadProcesses = new HashSet<ProcessId>();
         this.currentActiveLeader = me;
         this.causeLeaderPingTimout = false;
-        this.singleLeaderOnInception = false;
+        this.singleLeaderOnInception = true;
         this.logFile = "logs/"+me.name.replace(":", "") + ".log";
         this.activeLease = false;
     }
@@ -108,14 +108,8 @@ public class Leader extends Process {
             }*/ else if (msg instanceof ProposeMessage) {
                 ProposeMessage m = (ProposeMessage) msg;
 
-                if (!isIgnoring && isReadOnly(m.command) && m.slot_number == -1) {
-                    if (!readSlot.containsKey(m.command)){
-                        new Scout(env, new ProcessId("scout:" + me + ":" + ballot_number), me, acceptors, ballot_number, true);
-                        if(proposals.isEmpty())
-                            readSlot.put(m.command, 0);
-                        else
-                            readSlot.put(m.command, Collections.max(proposals.keySet()));
-                    }
+                if (isReadOnly(m.command) && m.slot_number == -1) {
+                    handleReadOnlyProposal(m);
                     continue;
                 }
 
@@ -155,6 +149,9 @@ public class Leader extends Process {
                                 currentSlotNumber = Collections.min(readSlot.values());
                                 executeReadOnlyCommands();
                             }
+                            else{
+                                new Scout(env, new ProcessId("scout:" + me + ":" + ballot_number), me, acceptors, ballot_number, true);
+                            }
                         }
                     }
 
@@ -168,6 +165,8 @@ public class Leader extends Process {
                             if(activeLease && System.currentTimeMillis() < leaseEnd){
                                 currentSlotNumber = Collections.min(readSlot.values());
                                 executeReadOnlyCommands();
+                            }else{
+                                new Scout(env, new ProcessId("scout:" + me + ":" + ballot_number), me, acceptors, ballot_number, true);
                             }
                         }
                     }
@@ -200,7 +199,26 @@ public class Leader extends Process {
         }
     }
 
+    private void handleReadOnlyProposal(ProposeMessage m) {
+        if (!readSlot.containsKey(m.command)){
+            if(!isIgnoring)
+                new Scout(env, new ProcessId("scout:" + me + ":" + ballot_number), me, acceptors, ballot_number, true);
+            if(proposals.isEmpty())
+                readSlot.put(m.command, 0);
+            else
+                readSlot.put(m.command, Collections.max(proposals.keySet()));
+        }
+    }
+
     public void executeReadOnlyCommands() {
+
+//        Test Case: Leader 1 dies before sending read only decision to replicas.
+//        if(me.name.equals("leader:1")){
+//            setWaiting(true);
+//            return;
+//        }
+
+
         Set<Command> commandsSent = new HashSet<Command>();
         for (Command cmd : readSlot.keySet()) {
             for (int i = 0; i < replicas.length; i++) {

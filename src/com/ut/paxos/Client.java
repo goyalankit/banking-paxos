@@ -17,13 +17,13 @@ public class Client extends Process {
 
     public void body() {
         System.out.println("Here I am: " + me);
-        //initCommands();
+        initCommands();
         while (true){
             PaxosMessage msg = getNextMessage();
             if (msg instanceof ServerResponse) {
                 ServerResponse m = (ServerResponse) msg;
                 if(!successfulTransactions.containsKey(m.req_id)){
-                    System.err.println("Received the response from server for req id "+m.req_id);
+                    System.out.println(me+" Received the response from server for req id "+m.req_id);
                     writeLog(m.req_id+": "+m.result);
                     successfulTransactions.put(m.req_id, 1);
                     latestReqId = m.req_id;
@@ -47,7 +47,7 @@ public class Client extends Process {
     }
 
     public void initCommands(){
-        testCases(1);
+        testCases(4);
 
     }
 
@@ -82,14 +82,14 @@ public class Client extends Process {
                         sendCommandToReplicas("cmd w 1 20");
                     }
                     else{
-                        sendCommandToReplicas("cmd w 1 20", 0);
+                        sendCommandToReplicas("cmd w 1 30", 0);
                     }
                     break;
                 case 4:
                     //nReplicas: 2, Leaders: 2, Acceptors: 3
                     //Replica One doesn't get request from client 1
                     if (me.name.equals("client:0")) {
-                        sendCommandToReplicas("cmd w 1 20");
+                        sendCommandToReplicas("cmd w 1 20", 0);
                     }
 
                     break;

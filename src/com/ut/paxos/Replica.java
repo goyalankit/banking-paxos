@@ -16,6 +16,9 @@ public class Replica extends Process {
     Map<Integer /* slot number */, Command> proposals = new HashMap<Integer, Command>();
     Map<Integer /* slot number */, Command> decisions = new HashMap<Integer, Command>();
     Map<Command, Integer> readBuffer = new HashMap<Command, Integer>();
+    Map<Command, Integer> readCommandAlreadyExecuted = new HashMap<Command, Integer>();
+    Map<Command, Integer> commandsAlExecuted = new HashMap<Command, Integer>();
+
     Set<Account> accounts;
 
     public Replica(Env env, ProcessId me, ProcessId[] leaders) {
@@ -58,12 +61,15 @@ public class Replica extends Process {
         }
         String command = (String) c.op;
         AccountAction accountAction = createAccountAction(command);
-        if (accountAction != null) {
+        if (accountAction != null ) {
             System.out.println("" + me + ": perform " + c);
             writeLog("" + me + ": perform " + c);
             accountAction.perform();
+            commandsAlExecuted.put(c, 1);
             sendMessage(c.client, new ServerResponse(me, command + " executed", c.req_id));
             executePendingCommands();
+        }else{
+            sendMessage(c.client, new ServerResponse(me, command + " invalid command", c.req_id));
         }
         slot_num++;
 
@@ -77,8 +83,11 @@ public class Replica extends Process {
                 AccountAction accountAction = createAccountAction((String) command.op);
                 accountAction.perform();
                 sendMessage(command.client, new ServerResponse(me, command + " executed", command.req_id));
+                System.err.println(me+" Key Present "+commandsAlExecuted.containsKey(command)+" The key is "+ commandsAlExecuted.get(command));
+                if(!commandsAlExecuted.containsKey(command))
+                    writeLog(me + " executed " + command);
+                commandsAlExecuted.put(command, 1);
                 commandsExecuted.add(command);
-                writeLog(me + " executed " + command);
             }
         }
 
@@ -158,14 +167,17 @@ public class Replica extends Process {
                     perform(c);
                 }
             } else if (msg instanceof ReadOnlyCommandMessage) {
-                System.err.println(me + " Read-only for me!");
+                //System.err.println(me + " Read-only for me!");
                 ReadOnlyCommandMessage m = (ReadOnlyCommandMessage) msg;
                 if (m.minSlot == 0 || decisions.containsKey(m.minSlot)) {
                     String command = (String) m.command.op;
                     AccountAction accountAction = createAccountAction(command);
-                    accountAction.perform();
-                    sendMessage(m.command.client, new ServerResponse(me, command + " executed", m.command.req_id));
-                    writeLog(me + " executed " + m.command);
+                    if(!commandsAlExecuted.containsKey(m.command)){
+                        accountAction.perform();
+                        sendMessage(m.command.client, new ServerResponse(me, command + " executed", m.command.req_id));
+                        writeLog(me + " executed " + m.command);
+                        commandsAlExecuted.put(m.command, 1);
+                    }
                     //sendMessage(m.src, new ReadOnlyAckMessage(this.me, m.command));
                 } else {
                     readBuffer.put(m.command, m.minSlot);

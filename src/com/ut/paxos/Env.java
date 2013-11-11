@@ -9,7 +9,7 @@ import java.util.Map;
 
 public class Env {
     Map<ProcessId, Process> procs = new HashMap<ProcessId, Process>();
-    public final static int nAcceptors = 3, nReplicas = 2, nLeaders = 2, nClients = 2, initBalance = 150, nAccounts = 5;
+    public final static int nAcceptors = 3, nReplicas = 2, nLeaders = 3, nClients = 2, initBalance = 150, nAccounts = 5;
 
     public static int nRequests = 1;
     //private HashMap<Integer, String> requests;
@@ -78,6 +78,7 @@ public class Env {
         for (int i = 0; i < nReplicas; i++) {
             ((Replica) procs.get(replicas[i])).clients = clients;
         }
+
 /*
         for (int i = 1; i < nRequests; i++) {
             ProcessId pid = new ProcessId("client:" + i);
@@ -88,12 +89,19 @@ public class Env {
             }
         }
 */
+
     }
 
 
     public static void main(String[] args) {
+
+        File dir1 = new File("logs");
+        for (File file : dir1.listFiles()) file.delete();
+
         Env env = new Env();
         env.run(args);
+
+
 
         BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
 
@@ -166,4 +174,3 @@ public class Env {
         }
     }
 }
-

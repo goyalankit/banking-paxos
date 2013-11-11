@@ -23,7 +23,6 @@ propose 1 cmd w 1 30 #leader:1 gets preempted here.
 
 Test Case:
 
-
 Within the same lease period
 Read
 Write
@@ -32,4 +31,33 @@ Read
 Read
 Read
 
+--------------------------------------------------------------------------------------------------------------------
+Test Case
+Add delay to commander for one replica. Until that replica receives write command decision it doesn;t execute read
 
+Uncomment the code in commander to add delay in write method.
+To simulate: execute:
+Query 1
+Write 1
+Query 2
+
+Result: Query 2 should happen after the write is finished at Replica.
+
+--------------------------------------------------------------------------------------------------------------------
+Test Case
+Kill the leader 1 before sending read only decision to all replicas.
+TO Simulate: Uncomment the code in leader.java in excuteReadOnlyCommands method
+
+Checking if a leader fails before sending read message then the other leader sends it.
+
+---------------------------------------------------------------------------------------------------------------------
+
+
+
+
+
+
+
+TODO:
+1. add leader logs.
+2. add acceptor logs.
