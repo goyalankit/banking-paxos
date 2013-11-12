@@ -42,11 +42,6 @@ public class Leader extends Process {
     long leaseTimeout = 7000;
     long leaseEnd;
 
-    //timeout variables
-    long ackExceptedTill;
-    long ackTimeout = 3000;
-    Set<Command> commandsSent = new HashSet<Command>();
-
 
 
     public Leader(Env env, ProcessId me, ProcessId[] acceptors,
@@ -103,14 +98,14 @@ public class Leader extends Process {
                     System.err.println("Monitor process is not running");
 
                 //we are cool keep waiting.
-            } else if (msg instanceof ReadOnlyAckMessage) {
+            } /*else if (msg instanceof ReadOnlyAckMessage) {
                 ReadOnlyAckMessage m = (ReadOnlyAckMessage) msg;
                 if (!readSlot.isEmpty()) {
                     readSlot.remove(m.command);
                     System.err.println("read slot size " + readSlot.size());
                 }
-                setReadAcks(m.command, 1);
-            } else if (msg instanceof ProposeMessage) {
+                readAcks.put(m.command, 1);
+            }*/ else if (msg instanceof ProposeMessage) {
                 ProposeMessage m = (ProposeMessage) msg;
 
                 if (isReadOnly(m.command) && m.slot_number == -1) {
@@ -224,26 +219,6 @@ public class Leader extends Process {
 //        }
 
 
-        for (Command cmd : readSlot.keySet()) {
-            if (currentSlotNumber >= readSlot.get(cmd)) {
-                ReadExecutor re = new ReadExecutor(cmd);
-                re.start();
-            }
-        }
-
-//        for (Command c : commandsSent)
-//            readSlot.remove(c);
-
-    }
-
-    public void oldexecuteReadOnlyCommands() {
-
-//        Test Case: Leader 1 dies before sending read only decision to replicas.
-//        if(me.name.equals("leader:1")){
-//            setWaiting(true);
-//            return;
-//        }
-
         Set<Command> commandsSent = new HashSet<Command>();
         for (Command cmd : readSlot.keySet()) {
             for (int i = 0; i < replicas.length; i++) {
@@ -258,55 +233,29 @@ public class Leader extends Process {
             readSlot.remove(c);
     }
 
-
+/*
     class ReadExecutor extends Thread{
-        private Command cmd;
-        ReadExecutor(Command cmd){
-            this.cmd = cmd;
-        }
-
         public void run(){
             System.err.println("Executing read only commands");
 
-            while (activeLease){
+            for(Command cmd : readSlot.keySet()){
+                int slot = readSlot.get(cmd);
                 ackExceptedTill = System.currentTimeMillis() + ackTimeout;
                 int i = 0;
                 //while (readSlot.containsKey(cmd)) {
-                sendMessage(replicas[i], new ReadOnlyCommandMessage(me, cmd, currentSlotNumber));
+                sendMessage(replicas[i], new ReadOnlyCommandMessage(me, cmd, slot));
                 while(ackExceptedTill > System.currentTimeMillis()){
-                    if(!getReadAcks().isEmpty() && getReadAcks().get(cmd) == 1){
-                        System.err.println("Breaking!!");
-                        //readSlot.remove(cmd);
+                    if(!readAcks.isEmpty() && readAcks.get(cmd) == 1){
+                        readSlot.remove(cmd);
                         break;
                     }
                 }
-               i++;
-
-                if(getReadAcks().isEmpty() || ((getReadAcks().get(cmd) != 1 && i < 2))){
-                    sendMessage(replicas[i], new ReadOnlyCommandMessage(me, cmd, currentSlotNumber));
-                }
-
-                else if(getReadAcks().get(cmd) == 1){
-                    commandsSent.add(cmd);
-                    break;
-                }
-
-                else{
-                    System.err.println("Cannot run read command..please try again.");
-                    break;
-                }
+                //}
             }
         }
     }
+*/
 
-
-    public synchronized Map<Command, Integer> getReadAcks() {
-        return readAcks;
-    }
-
-    public synchronized void  setReadAcks(Command c, Integer i) {
-        readAcks.put(c,i);
-    }
 
     public void startMonitoring(ProcessId leader) {
 
