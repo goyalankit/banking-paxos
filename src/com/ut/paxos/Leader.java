@@ -39,7 +39,7 @@ public class Leader extends Process {
     private boolean activeLease;
     Map<Command, Integer /* Maximum slot number */> readAcks = new HashMap<Command, Integer>();
     int currentSlotNumber;
-    long leaseTimeout = 7000;
+    long leaseTimeout = 15000;
     long leaseEnd;
 
     //timeout variables
@@ -267,14 +267,13 @@ public class Leader extends Process {
 
         public void run(){
             System.err.println("Executing read only commands");
-
+            int i = 0;
             while (activeLease){
                 ackExceptedTill = System.currentTimeMillis() + ackTimeout;
-                int i = 0;
                 //while (readSlot.containsKey(cmd)) {
                 sendMessage(replicas[i], new ReadOnlyCommandMessage(me, cmd, currentSlotNumber));
                 while(ackExceptedTill > System.currentTimeMillis()){
-                    if(!getReadAcks().isEmpty() && getReadAcks().get(cmd) == 1){
+                    if(!getReadAcks().isEmpty() && getReadAcks().get(cmd) != null && getReadAcks().get(cmd) == 1){
                         System.err.println("Breaking!!");
                         //readSlot.remove(cmd);
                         break;
@@ -282,17 +281,19 @@ public class Leader extends Process {
                 }
                i++;
 
-                if(getReadAcks().isEmpty() || ((getReadAcks().get(cmd) != 1 && i < 2))){
-                    sendMessage(replicas[i], new ReadOnlyCommandMessage(me, cmd, currentSlotNumber));
+                if((getReadAcks().isEmpty() || getReadAcks().get(cmd) == null ) && i < 2){
+                    //sendMessage(replicas[i], new ReadOnlyCommandMessage(me, cmd, currentSlotNumber));
+                    //ackExceptedTill = System.currentTimeMillis() + ackTimeout;
+                    continue;
                 }
 
-                else if(getReadAcks().get(cmd) == 1){
+                else if(getReadAcks().get(cmd) !=null && getReadAcks().get(cmd) == 1){
                     commandsSent.add(cmd);
                     break;
                 }
 
                 else{
-                    System.err.println("Cannot run read command..please try again.");
+                    System.err.println("Ack not received from replicas");
                     break;
                 }
             }
@@ -429,7 +430,7 @@ public class Leader extends Process {
     //Method for testing
     public boolean allowedToSendHeartBeat(ProcessId processId) {
         if (causeLeaderPingTimout) {
-            if (me.name.equals("leader:1") && processId.name.equals("leader:0"))
+            if (me.name.equals("leader:0") && processId.name.equals("leader:1"))
                 return false;
         }
         return true;
