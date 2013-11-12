@@ -10,7 +10,7 @@ public class Acceptor extends Process {
     BallotNumber ballot_number = null;
     Set<PValue> accepted = new HashSet<PValue>();
     boolean leaseActive;
-    long leaseTime = 20000;
+    long leaseTime = 10000;
     long leaseTimeout;
     ProcessId currentLeader;
     String logFile;

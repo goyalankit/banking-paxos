@@ -177,8 +177,7 @@ public class Replica extends Process {
                         sendMessage(m.command.client, new ServerResponse(me, command + " executed", m.command.req_id));
                         writeLog(me + " executed " + m.command);
                         commandsAlExecuted.put(m.command, 1);
-//                        if(!me.name.equals("replica:0"))
-                          sendMessage(m.src, new ReadOnlyAckMessage(this.me, m.command));
+                        sendMessage(m.src, new ReadOnlyAckMessage(this.me, m.command));
                     }
 
                 } else {

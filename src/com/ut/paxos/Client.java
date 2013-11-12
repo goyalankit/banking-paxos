@@ -47,7 +47,7 @@ public class Client extends Process {
     }
 
     public void initCommands(){
-        //testCases(4);
+        testCases(4);
 
     }
 
