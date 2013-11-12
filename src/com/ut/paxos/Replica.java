@@ -83,7 +83,7 @@ public class Replica extends Process {
                 AccountAction accountAction = createAccountAction((String) command.op);
                 accountAction.perform();
                 sendMessage(command.client, new ServerResponse(me, command + " executed", command.req_id));
-                System.err.println(me+" Key Present "+commandsAlExecuted.containsKey(command)+" The key is "+ commandsAlExecuted.get(command));
+                //System.err.println(me+" Key Present "+commandsAlExecuted.containsKey(command)+" The key is "+ commandsAlExecuted.get(command));
                 if(!commandsAlExecuted.containsKey(command))
                     writeLog(me + " executed " + command);
                 commandsAlExecuted.put(command, 1);

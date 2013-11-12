@@ -41,6 +41,7 @@ public class Leader extends Process {
     int currentSlotNumber;
     long leaseTimeout = 7000;
     long leaseEnd;
+    int newLeader;
 
 
 
@@ -60,6 +61,7 @@ public class Leader extends Process {
         this.singleLeaderOnInception = true;
         this.logFile = "logs/"+me.name.replace(":", "") + ".log";
         this.activeLease = false;
+        this.newLeader = 0;
     }
 
     public void body() {
@@ -73,15 +75,14 @@ public class Leader extends Process {
         while (!isWaiting) {
             PaxosMessage msg = getNextMessage();
 
-            if(singleLeaderOnInception){
-                if(init && !me.equals(leaders[0])){
+                if(init && !me.equals(leaders[newLeader])){
                     if(!isIgnoring)
                         setIgnoring(true);
-                    startMonitoring(leaders[0]);
+                    startMonitoring(leaders[newLeader]);
                     init = false;
                     continue;
                 }
-            }
+
 
             if (msg instanceof HearBeatMessage) {
                 HearBeatMessage m = (HearBeatMessage) msg;
@@ -287,10 +288,18 @@ public class Leader extends Process {
             //System.err.println("Monitor started in " + parent.me);
             while (isRunning) {
                 if (lastHeartBeat < System.currentTimeMillis() - 3000) {
-                    parent.setIgnoring(false);
                     break;
                 }
                 yield();
+            }
+            newLeader++;
+            if(me.equals(leaders[newLeader])){
+                parent.setIgnoring(false);
+                return;
+            }else if(newLeader < Env.nLeaders){
+                if(!isIgnoring)
+                    setIgnoring(true);
+                startMonitoring(leaders[newLeader]);
             }
         }
 
