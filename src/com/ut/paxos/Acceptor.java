@@ -47,7 +47,6 @@ public class Acceptor extends Process {
             }
             else
                 processMessage(msg);
-
         }
     }
 
