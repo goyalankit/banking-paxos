@@ -185,7 +185,7 @@ public class Leader extends Process {
                         if (monitor != null)
                             monitor.kill();
 
-                        startMonitoring(m.ballot_number.getLeader_id());
+                        startMonitoring(leaders[newLeader]);
                         continue;
 
                     } else if (deadProcesses.contains(m.ballot_number.getLeader_id())) {
@@ -214,7 +214,7 @@ public class Leader extends Process {
     public void executeReadOnlyCommands() {
 
 //        Test Case: Leader 1 dies before sending read only decision to replicas.
-//        if(me.name.equals("leader:1")){
+//        if(me.name.equals("leader:0")){
 //            setWaiting(true);
 //            return;
 //        }
@@ -293,10 +293,13 @@ public class Leader extends Process {
                 yield();
             }
             newLeader++;
+
             if(me.equals(leaders[newLeader])){
+                System.out.println(me+" I am the new leader...hence going to cleanup the dead");
                 parent.setIgnoring(false);
                 return;
             }else if(newLeader < Env.nLeaders){
+                System.out.println(me+" I am not the leader...:(");
                 if(!isIgnoring)
                     setIgnoring(true);
                 startMonitoring(leaders[newLeader]);
