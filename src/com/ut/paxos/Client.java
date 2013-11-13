@@ -47,7 +47,7 @@ public class Client extends Process {
     }
 
     public void initCommands(){
-        testCases(4);
+        //testCases(5);
 
     }
 
@@ -92,6 +92,14 @@ public class Client extends Process {
                         sendCommandToReplicas("cmd w 1 20", 0);
                     }
 
+                    break;
+                case 5:
+                    if (me.name.equals("client:0")) {
+                        sendCommandToReplicas("cmd q 1");
+                    }   else{
+                        Thread.sleep(2000);
+                        sendCommandToReplicas("cmd q 1");
+                    }
                     break;
                 default:
                     System.err.println("No test case exists with this number ");

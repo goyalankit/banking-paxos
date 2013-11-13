@@ -48,13 +48,20 @@ public class Commander extends Process {
         }
 
         for (ProcessId r : replicas) {
-//            Test case
+//            TODO Test case 4
 //            if(r.name.equals("replica:1"))
 //                try {
 //                    Thread.sleep(20000);
 //                } catch (InterruptedException e) {
 //                    e.printStackTrace();
 //                }
+
+//            //TODO Test case 7 DIE BEFORE SENDING IT TO REPLICA 1 7thfloor
+//            if(leader.name.equals("leader:0") && r.name.equals("replica:1") && command.req_id == 1){
+//                System.out.println("not sending this to replica 1");
+//                return;
+//            }
+
             sendMessage(r, new DecisionMessage(me, slot_number, command));
         }
     }

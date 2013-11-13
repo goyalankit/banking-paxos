@@ -128,7 +128,7 @@ public class Env {
                     l.setWaiting(true);
                     System.out.println("**** stopping leader "+ l.me +" ****");
                 }else if (cmd.equalsIgnoreCase("ping-timeout")) {
-                    Leader l = (Leader) env.procs.get(env.leaders[1]);
+                    Leader l = (Leader) env.procs.get(env.leaders[0]);
                     l.setCauseLeaderPingTimout(true);
                     System.out.println("**** Leader:1 will stop sending ping responses to Leader:0 ****");
                 }

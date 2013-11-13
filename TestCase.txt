@@ -4,7 +4,7 @@ nLeaders: 2
 nAcceptors:  3
 
 Flow :
-Leader 1 is master leader. Leader 0 gets preempted.
+Leader 0 is master leader. Leader 1 gets preempted.
 
 Leader 1 doesn't send ping to leader 0
 Leader 0 becomes leader again

@@ -83,7 +83,7 @@ public class Acceptor extends Process {
             P2aMessage m = (P2aMessage) msg;
             //System.out.println(me + " Phase 2a proposal received from " + m.ballot_number.getLeader_id() + " "+ m.command +" " + " with ballot number " + m.ballot_number);
             //System.err.println(me+" Phase 2a received for  "+m.command);
-            writeLog(me+" Proposal Received for "+m.command);
+            writeLog(me+" Proposal Received for "+m.command + " from "+m.src);
             if (ballot_number == null ||
                     ballot_number.compareTo(m.ballot_number) <= 0) {
                 ballot_number = m.ballot_number;

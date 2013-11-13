@@ -43,8 +43,6 @@ public class Leader extends Process {
     long leaseEnd;
     int newLeader;
 
-
-
     public Leader(Env env, ProcessId me, ProcessId[] acceptors,
                   ProcessId[] replicas) {
         this.env = env;
@@ -74,6 +72,9 @@ public class Leader extends Process {
 
         while (!isWaiting) {
             PaxosMessage msg = getNextMessage();
+
+                if(isWaiting)
+                    return;
 
                 if(init && !me.equals(leaders[newLeader])){
                     if(!isIgnoring)
@@ -109,6 +110,8 @@ public class Leader extends Process {
             }*/ else if (msg instanceof ProposeMessage) {
                 ProposeMessage m = (ProposeMessage) msg;
 
+                writeLog(me+" proposal received from "+m.src);
+
                 if (isReadOnly(m.command) && m.slot_number == -1) {
                     handleReadOnlyProposal(m);
                     continue;
@@ -128,7 +131,10 @@ public class Leader extends Process {
             } else if (msg instanceof AdoptedMessage) {
 
                 AdoptedMessage m = (AdoptedMessage) msg;
+
                 System.out.println("Adopted by " + m.src);
+
+                writeLog(me+" Adobted by "+m.src);
                 if (ballot_number.equals(m.ballot_number)) {
                     Map<Integer, BallotNumber> max = new HashMap<Integer, BallotNumber>();
                     for (PValue pv : m.accepted) {
@@ -142,7 +148,17 @@ public class Leader extends Process {
                     if(m.awardedLease){
                         activeLease = true;
                         leaseEnd = System.currentTimeMillis() + leaseTimeout;
+                        if(!proposals.isEmpty()){
+                            int mx = Collections.max(proposals.keySet());
+                            for(Command cmd : readSlot.keySet() ){
+                                readSlot.put(cmd, mx);
+                            }
+                        }
                     }
+
+                    System.out.println(me+" proposal size "+proposals.size()+" read slot emptY? "+readSlot.isEmpty());
+                    if(!readSlot.isEmpty())
+                        System.out.println("read slot was not empty "+Collections.min(readSlot.values()));
 
                     if(proposals.isEmpty()){
                         if (!readSlot.isEmpty()) {
@@ -175,11 +191,11 @@ public class Leader extends Process {
                 }
             } else if (msg instanceof PreemptedMessage) {
                 PreemptedMessage m = (PreemptedMessage) msg;
-
+                writeLog(me+" Preempted by "+m.ballot_number.leader_id + " with ballot number"+ m.ballot_number + " my ballot number: "+ballot_number  );
                 if (ballot_number.compareTo(m.ballot_number) < 0 || m.ballot_number.round == -1) {
                     ballot_number = new BallotNumber(m.ballot_number.round + 1, me);
 
-                    if (!isIgnoring) {
+                    if (!isIgnoring && !me.equals(leaders[newLeader])) {
                         setIgnoring(true);
 
                         if (monitor != null)
@@ -213,7 +229,7 @@ public class Leader extends Process {
 
     public void executeReadOnlyCommands() {
 
-//        Test Case: Leader 1 dies before sending read only decision to replicas.
+//        TODO Test Case 5: Leader 1 dies before sending read only decision to replicas.
 //        if(me.name.equals("leader:0")){
 //            setWaiting(true);
 //            return;
@@ -223,6 +239,7 @@ public class Leader extends Process {
         Set<Command> commandsSent = new HashSet<Command>();
         for (Command cmd : readSlot.keySet()) {
             for (int i = 0; i < replicas.length; i++) {
+
                 if (currentSlotNumber >= readSlot.get(cmd)) {
                     sendMessage(replicas[i], new ReadOnlyCommandMessage(me, cmd, currentSlotNumber));
                     commandsSent.add(cmd);
@@ -232,6 +249,9 @@ public class Leader extends Process {
 
         for (Command c : commandsSent)
             readSlot.remove(c);
+
+        if(!proposals.isEmpty())
+            new Scout(env, new ProcessId("scout:" + me + ":" + ballot_number), me, acceptors, ballot_number);
     }
 
 /*
@@ -389,8 +409,9 @@ public class Leader extends Process {
 
     //Method for testing
     public boolean allowedToSendHeartBeat(ProcessId processId) {
+        //System.out.println("course leader pingout "+ causeLeaderPingTimout);
         if (causeLeaderPingTimout) {
-            if (me.name.equals("leader:1") && processId.name.equals("leader:0"))
+            if (me.name.equals("leader:0") && processId.name.equals("leader:1"))
                 return false;
         }
         return true;

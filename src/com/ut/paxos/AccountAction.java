@@ -13,15 +13,15 @@ public class AccountAction {
         return account;
     }
 
-    public void perform() {
-
+    public String perform() {
+        return "";
     }
 
     public void writeToConsole(String s, Boolean isError) {
         PrintStream out = isError ? System.err : System.out;
-        out.print("*** ");
-        out.print(s);
-        out.println(" ***");
+        //out.print("*** ");
+      //  out.print(s);
+       // out.println(" ***");
     }
 }
 
@@ -35,13 +35,18 @@ class Withdraw extends AccountAction {
     }
 
     @Override
-    public void perform() {
+    public String perform() {
         int currentBalance = account.getCurrentBalance();
+        String response;
         if (currentBalance >= wdamount) {
             account.setCurrentBalance(currentBalance - wdamount);
-            writeToConsole("Withdraw Successful of $" + wdamount + " final balance " + account.getCurrentBalance(), false);
+            response = "; Withdraw Successful of $" + wdamount + " final balance " + account.getCurrentBalance();
+            writeToConsole(response, false);
+            return response;
         } else {
-            writeToConsole("Insufficient Balance in Source Account", true);
+            response = "; Insufficient Balance in Source Account";
+            writeToConsole(response, true);
+            return response;
         }
     }
 
@@ -64,12 +69,13 @@ class Deposit extends AccountAction {
     }
 
     @Override
-    public void perform() {
+    public String perform() {
+        String response;
         int currentBalance = account.getCurrentBalance();
-
         account.setCurrentBalance(currentBalance + dpamount);
-        writeToConsole("Deposit Successful of $" + dpamount + " final balance " + account.getCurrentBalance(), false);
-
+        response = "; Deposit Successful of $" + dpamount + " final balance " + account.getCurrentBalance();
+        writeToConsole(response, false);
+        return response;
     }
 
     public String toString() {
@@ -89,14 +95,19 @@ class Transfer extends AccountAction {
     }
 
     @Override
-    public void perform() {
+    public String perform() {
         int currentBalance = account.getCurrentBalance();
+        String response;
         if (currentBalance >= tamount) {
             account.setCurrentBalance(currentBalance - tamount);
             dstaccount.setCurrentBalance(dstaccount.getCurrentBalance() + tamount);
-            writeToConsole("Transfer Successful of $" + tamount + " final balance " + account.getCurrentBalance(), false);
+            response = "; Transfer Successful of $" + tamount + " final balance " + account.getCurrentBalance();
+            writeToConsole(response, false);
+            return response;
         } else {
-            writeToConsole("Insufficient Balance in Source Account", true);
+            response = "; Insufficient Balance in Source Account";
+            writeToConsole(response, true);
+            return response;
         }
     }
 
@@ -113,8 +124,10 @@ class Query extends AccountAction {
     }
 
     @Override
-    public void perform() {
-        writeToConsole("Query Successful Current balance for " + account.getAccountNo() + ": " + account.getCurrentBalance(), false);
+    public String perform() {
+        String response = "; Query Successful Current balance for " + account.getAccountNo() + ": " + account.getCurrentBalance();
+        writeToConsole(response, false);
+        return response;
     }
 
     public String toString() {

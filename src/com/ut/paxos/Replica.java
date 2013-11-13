@@ -39,6 +39,9 @@ public class Replica extends Process {
                         proposals.put(s, c);
                         writeLog(me + " <propose, < slot:  " + s + " command: " + c + " ");
                         for (ProcessId ldr : leaders) {
+//                            //TODO Test case 7 REPLICA DOESN'T SEND WRITE REQUEST TO LEADER 1 7th floor
+//                            if(ldr.name.equals("leader:1") && c.req_id == 1)
+//                                continue;
                             sendMessage(ldr, new ProposeMessage(me, s, c));
                         }
                         break;
@@ -64,9 +67,10 @@ public class Replica extends Process {
         if (accountAction != null ) {
             System.out.println("" + me + ": perform " + c);
             writeLog("" + me + ": perform " + c);
-            accountAction.perform();
+            String response;
+            response = accountAction.perform();
             commandsAlExecuted.put(c, 1);
-            sendMessage(c.client, new ServerResponse(me, command + " executed", c.req_id));
+            sendMessage(c.client, new ServerResponse(me, command + " " + response, c.req_id));
             executePendingCommands();
         }else{
             sendMessage(c.client, new ServerResponse(me, command + " invalid command", c.req_id));
@@ -81,8 +85,8 @@ public class Replica extends Process {
         for (Command command : readBuffer.keySet()) {
             if (readBuffer.get(command) == 0 || decisions.containsKey(readBuffer.get(command))) {
                 AccountAction accountAction = createAccountAction((String) command.op);
-                accountAction.perform();
-                sendMessage(command.client, new ServerResponse(me, command + " executed", command.req_id));
+                String response = accountAction.perform();
+                sendMessage(command.client, new ServerResponse(me, command + " " + response, command.req_id));
                 //System.err.println(me+" Key Present "+commandsAlExecuted.containsKey(command)+" The key is "+ commandsAlExecuted.get(command));
                 if(!commandsAlExecuted.containsKey(command))
                     writeLog(me + " executed " + command);
@@ -124,7 +128,7 @@ public class Replica extends Process {
             }
 
         } catch (Exception e) {
-            e.printStackTrace();
+            //e.printStackTrace();
             System.err.println("Invalid Command");
             return null;
         }
@@ -173,8 +177,8 @@ public class Replica extends Process {
                     String command = (String) m.command.op;
                     AccountAction accountAction = createAccountAction(command);
                     if(!commandsAlExecuted.containsKey(m.command)){
-                        accountAction.perform();
-                        sendMessage(m.command.client, new ServerResponse(me, command + " executed", m.command.req_id));
+                        String response = accountAction.perform();
+                        sendMessage(m.command.client, new ServerResponse(me, command + " " + response, m.command.req_id));
                         writeLog(me + " executed " + m.command);
                         commandsAlExecuted.put(m.command, 1);
                     }
