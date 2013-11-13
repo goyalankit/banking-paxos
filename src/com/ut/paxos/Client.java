@@ -34,7 +34,7 @@ public class Client extends Process {
 
     public Client(Env env, ProcessId me, Set <Account> accounts, ProcessId[] replicas) {
         this.env = env;
-      //  this.accounts = accounts;
+//        this.accounts = accounts;
         this.me = me;
         this.replicas = replicas;
         this.numberOfRequests = 0;
@@ -48,7 +48,6 @@ public class Client extends Process {
 
     public void initCommands(){
         //testCases(5);
-
     }
 
     public void testCases(int num) {
@@ -98,7 +97,7 @@ public class Client extends Process {
                         sendCommandToReplicas("cmd q 1");
                     }   else{
                         Thread.sleep(2000);
-                        sendCommandToReplicas("cmd q 1");
+                        sendCommandToReplicas("cmd w 1 20");
                     }
                     break;
                 default:

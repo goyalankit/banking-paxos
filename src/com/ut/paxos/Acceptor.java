@@ -73,7 +73,7 @@ public class Acceptor extends Process {
             }
 
             if(awardedLease){
-                sendMessage(m.src, new P1bMessage(me, ballot_number, new HashSet<PValue>(accepted), true));
+                sendMessage(m.src, new P1bMessage(me, ballot_number, new HashSet<PValue>(accepted), true, (System.currentTimeMillis() + leaseTimeout)));
             }
             else{
                 sendMessage(m.src, new P1bMessage(me, ballot_number, new HashSet<PValue>(accepted)));

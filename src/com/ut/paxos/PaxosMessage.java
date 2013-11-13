@@ -25,15 +25,17 @@ class P1bMessage extends PaxosMessage {
     BallotNumber ballot_number;
     Set<PValue> accepted;
     boolean awardedLease;
+    long currentTimeStamp;
 
     P1bMessage(ProcessId src, BallotNumber ballot_number, Set<PValue> accepted) {
         this.src = src;
         this.ballot_number = ballot_number;
         this.accepted = accepted;
     }
-    P1bMessage(ProcessId src, BallotNumber ballot_number, Set<PValue> accepted, boolean awardedLease) {
+    P1bMessage(ProcessId src, BallotNumber ballot_number, Set<PValue> accepted, boolean awardedLease, long currentTimeStamp) {
         this(src, ballot_number, accepted);
         this.awardedLease = awardedLease;
+        this.currentTimeStamp = currentTimeStamp;
     }
 }
 
@@ -74,6 +76,7 @@ class AdoptedMessage extends PaxosMessage {
     BallotNumber ballot_number;
     Set<PValue> accepted;
     boolean awardedLease;
+    long currentTimeStamp;
 
     AdoptedMessage(ProcessId src, BallotNumber ballot_number, Set<PValue> accepted) {
         this.src = src;
@@ -81,9 +84,10 @@ class AdoptedMessage extends PaxosMessage {
         this.accepted = accepted;
     }
 
-    AdoptedMessage(ProcessId src, BallotNumber ballot_number, Set<PValue> accepted, boolean awardedLease) {
+    AdoptedMessage(ProcessId src, BallotNumber ballot_number, Set<PValue> accepted, boolean awardedLease, long currentTimeStamp) {
         this(src, ballot_number, accepted);
         this.awardedLease = awardedLease;
+        this.currentTimeStamp = currentTimeStamp;
     }
 }
 

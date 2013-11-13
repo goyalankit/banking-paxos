@@ -147,7 +147,7 @@ public class Leader extends Process {
 
                     if(m.awardedLease){
                         activeLease = true;
-                        leaseEnd = System.currentTimeMillis() + leaseTimeout;
+                        leaseEnd =  m.currentTimeStamp;
                         if(!proposals.isEmpty()){
                             int mx = Collections.max(proposals.keySet());
                             for(Command cmd : readSlot.keySet() ){

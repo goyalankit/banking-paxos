@@ -9,6 +9,7 @@ public class Scout extends Process {
     BallotNumber ballot_number;
     boolean ask_for_lease;
     boolean leaseAwarded;
+    long minCurrentTimeStamp;
 
     public Scout(Env env, ProcessId me, ProcessId leader,
                  ProcessId[] acceptors, BallotNumber ballot_number) {
@@ -19,6 +20,7 @@ public class Scout extends Process {
         this.ballot_number = ballot_number;
         this.leaseAwarded = false;
         this.ask_for_lease = false;
+        this.minCurrentTimeStamp = System.currentTimeMillis()+3;
         env.addProc(me, this);
     }
 
@@ -61,8 +63,12 @@ public class Scout extends Process {
                     pvalues.addAll(m.accepted);
                 }
 
-                if(m.awardedLease)
+                if(m.awardedLease){
                     leaseAwarded = true;
+                    if(minCurrentTimeStamp > m.currentTimeStamp){
+                        minCurrentTimeStamp = m.currentTimeStamp;
+                    }
+                }
 
 
             } else {
@@ -71,7 +77,17 @@ public class Scout extends Process {
         }
         if(leaseAwarded){
             System.err.println("Lease Awarded to leader "+leader.name);
-            sendMessage(leader, new AdoptedMessage(me, ballot_number, pvalues, true));
+
+            //TODO LEASE TEST CASE
+//            if(leader.name.equals("leader:0")){
+//                try {
+//                    Thread.sleep(30000);
+//                } catch (InterruptedException e) {
+//                    e.printStackTrace();
+//                }
+//            }
+
+            sendMessage(leader, new AdoptedMessage(me, ballot_number, pvalues, true, minCurrentTimeStamp));
             leaseAwarded = false;
             ask_for_lease = false;
         }
